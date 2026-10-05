@@ -1,0 +1,21 @@
+# dependencias
+node_modules/
+
+# build
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# testes
+coverage/
+
+# ambiente
+.env*
+!.env.example
+
+# ferramentas locais
+.claude/settings.local.json
+.vercel
+.DS_Store

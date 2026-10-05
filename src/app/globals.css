@@ -1,0 +1,202 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   Finan — Design Tokens
+   ----------------------------------------------------------------------------
+   Regras da paleta:
+   - Neutros frios (hue ~286) como base. Nada de cinza puro: dá frieza de ERP.
+   - UMA cor de marca (`primary`, violeta).
+   - DUAS cores funcionais e exclusivas de finanças: `income` e `expense`.
+     `expense` NAO e o mesmo que `destructive` — gasto nao e erro.
+   - `chart-*` e uma escala categorica: hues bem separados, lightness proxima,
+     legivel nos dois temas.
+   Nenhum componente deve usar cor literal. Sempre token.
+   ========================================================================== */
+
+:root {
+  --radius: 0.875rem;
+
+  /* superficies */
+  --background: oklch(0.994 0.001 286);
+  --foreground: oklch(0.205 0.012 286);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.012 286);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.012 286);
+
+  /* marca */
+  --primary: oklch(0.545 0.205 287);
+  --primary-foreground: oklch(0.985 0.002 286);
+
+  /* neutros de apoio */
+  --secondary: oklch(0.967 0.004 286);
+  --secondary-foreground: oklch(0.26 0.012 286);
+  --muted: oklch(0.967 0.004 286);
+  --muted-foreground: oklch(0.53 0.014 286);
+  --accent: oklch(0.955 0.008 287);
+  --accent-foreground: oklch(0.26 0.012 286);
+
+  /* estado de erro (acao destrutiva, nao gasto) */
+  --destructive: oklch(0.577 0.191 25);
+  --destructive-foreground: oklch(0.985 0.002 286);
+
+  /* contornos */
+  --border: oklch(0.916 0.005 286);
+  --input: oklch(0.906 0.006 286);
+  --ring: oklch(0.545 0.205 287);
+
+  /* financeiro */
+  --income: oklch(0.526 0.122 163);
+  --income-foreground: oklch(0.985 0.002 286);
+  --income-surface: oklch(0.955 0.032 163);
+  --expense: oklch(0.556 0.176 20);
+  --expense-foreground: oklch(0.985 0.002 286);
+  --expense-surface: oklch(0.958 0.026 20);
+
+  /* graficos */
+  --chart-1: oklch(0.545 0.205 287);
+  --chart-2: oklch(0.585 0.132 212);
+  --chart-3: oklch(0.595 0.126 163);
+  --chart-4: oklch(0.682 0.142 75);
+  --chart-5: oklch(0.585 0.172 12);
+}
+
+.dark {
+  /* superficies */
+  --background: oklch(0.165 0.008 286);
+  --foreground: oklch(0.967 0.003 286);
+  --card: oklch(0.207 0.009 286);
+  --card-foreground: oklch(0.967 0.003 286);
+  --popover: oklch(0.228 0.010 286);
+  --popover-foreground: oklch(0.967 0.003 286);
+
+  /* marca */
+  --primary: oklch(0.672 0.175 287);
+  --primary-foreground: oklch(0.175 0.018 287);
+
+  /* neutros de apoio */
+  --secondary: oklch(0.262 0.010 286);
+  --secondary-foreground: oklch(0.967 0.003 286);
+  --muted: oklch(0.262 0.010 286);
+  --muted-foreground: oklch(0.698 0.014 286);
+  --accent: oklch(0.288 0.012 286);
+  --accent-foreground: oklch(0.967 0.003 286);
+
+  /* estado de erro */
+  --destructive: oklch(0.655 0.182 23);
+  --destructive-foreground: oklch(0.985 0.002 286);
+
+  /* contornos */
+  --border: oklch(0.278 0.010 286);
+  --input: oklch(0.312 0.012 286);
+  --ring: oklch(0.672 0.175 287);
+
+  /* financeiro */
+  --income: oklch(0.755 0.145 163);
+  --income-foreground: oklch(0.185 0.035 163);
+  --income-surface: oklch(0.252 0.032 163);
+  --expense: oklch(0.692 0.165 22);
+  --expense-foreground: oklch(0.182 0.038 22);
+  --expense-surface: oklch(0.256 0.036 22);
+
+  /* graficos */
+  --chart-1: oklch(0.672 0.175 287);
+  --chart-2: oklch(0.698 0.122 212);
+  --chart-3: oklch(0.742 0.132 163);
+  --chart-4: oklch(0.792 0.142 78);
+  --chart-5: oklch(0.688 0.162 14);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-income: var(--income);
+  --color-income-foreground: var(--income-foreground);
+  --color-income-surface: var(--income-surface);
+  --color-expense: var(--expense);
+  --color-expense-foreground: var(--expense-foreground);
+  --color-expense-surface: var(--expense-surface);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+
+  /* Numeros financeiros: escala propria, maior que a tipografica normal.
+     Usada pelo MoneyText (lote 3+). */
+  --text-money-sm: 0.9375rem;
+  --text-money-md: 1.375rem;
+  --text-money-lg: 1.875rem;
+  --text-money-hero: 2.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings:
+      'cv11' 1,
+      'ss01' 1;
+    overscroll-behavior-y: none;
+  }
+
+  /* Valores monetarios nunca "dancam" ao atualizar. */
+  .money {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    @apply bg-primary/20;
+  }
+
+  :focus-visible {
+    @apply outline-ring outline-2 outline-offset-2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
