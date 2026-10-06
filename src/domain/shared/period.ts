@@ -65,6 +65,21 @@ export const civilMonthResolver: PeriodResolver = {
   },
 };
 
+/**
+ * Onde o periodo esta em relacao a hoje.
+ *
+ * A interface precisa disso para nao mentir: "voce terminara o mes com..."
+ * e uma frase valida em outubro e absurda em setembro, que ja acabou. E um
+ * mes futuro nao tem saldo realizado, so lancamentos previstos.
+ */
+export type PeriodTemporality = 'past' | 'current' | 'future';
+
+export function periodTemporality(period: Period, today: PlainDate): PeriodTemporality {
+  if (today > period.end) return 'past';
+  if (today < period.start) return 'future';
+  return 'current';
+}
+
 /** Periodo atual segundo o resolver, a partir de uma data de referencia. */
 export function currentPeriod(resolver: PeriodResolver, today: PlainDate): Period {
   return resolver.resolve(resolver.keyOf(today));

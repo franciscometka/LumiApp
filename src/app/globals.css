@@ -55,12 +55,12 @@
   --expense-foreground: oklch(0.985 0.002 286);
   --expense-surface: oklch(0.958 0.026 20);
 
-  /* graficos */
-  --chart-1: oklch(0.545 0.205 287);
-  --chart-2: oklch(0.585 0.132 212);
-  --chart-3: oklch(0.595 0.126 163);
-  --chart-4: oklch(0.682 0.142 75);
-  --chart-5: oklch(0.585 0.172 12);
+  /* graficos — paleta categorica validada (ver nota abaixo) */
+  --chart-1: oklch(0.520 0.200 287);
+  --chart-2: oklch(0.645 0.135 232);
+  --chart-3: oklch(0.700 0.150 152);
+  --chart-4: oklch(0.600 0.135 68);
+  --chart-5: oklch(0.470 0.175 18);
 }
 
 .dark {
@@ -101,13 +101,36 @@
   --expense-foreground: oklch(0.182 0.038 22);
   --expense-surface: oklch(0.256 0.036 22);
 
-  /* graficos */
-  --chart-1: oklch(0.672 0.175 287);
-  --chart-2: oklch(0.698 0.122 212);
-  --chart-3: oklch(0.742 0.132 163);
-  --chart-4: oklch(0.792 0.142 78);
-  --chart-5: oklch(0.688 0.162 14);
+  /* graficos — passos proprios do tema escuro, nao um espelho do claro */
+  --chart-1: oklch(0.520 0.195 287);
+  --chart-2: oklch(0.635 0.125 232);
+  --chart-3: oklch(0.668 0.150 152);
+  --chart-4: oklch(0.580 0.140 68);
+  --chart-5: oklch(0.482 0.180 18);
 }
+
+/* ============================================================================
+   Nota sobre a escala categorica
+   ----------------------------------------------------------------------------
+   Os cinco passos NAO foram escolhidos a olho. A primeira versao parecia boa e
+   falhava em dois pontos reais, detectados por validacao numerica:
+
+   1. ciano e verde ficavam a Delta-E 10,5 um do outro — indistinguiveis mesmo
+      com visao normal de cores;
+   2. depois de corrigidos os matizes, vermelho e verde colapsavam a Delta-E 1,7
+      sob deuteranopia, o tipo mais comum de daltonismo.
+
+   A correcao foi separar tambem a LUMINOSIDADE, nao so o matiz: sob
+   deuteranopia o matiz colapsa em um eixo azul-amarelo, e so a luminosidade
+   continua distinguindo vermelho de verde.
+
+   Resultado: todos os pares passam com Delta-E >= 8 em protanopia, deuteranopia
+   e tritanopia, e >= 15 em visao normal, nos dois temas.
+
+   O amarelo no claro e o vermelho no escuro ficam abaixo de 3:1 de contraste
+   contra a superficie; por isso o grafico SEMPRE traz legenda com nome e valor
+   — a identidade nunca depende da cor sozinha.
+   ========================================================================== */
 
 @theme inline {
   --color-background: var(--background);

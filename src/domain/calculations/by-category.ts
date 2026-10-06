@@ -10,6 +10,12 @@ export interface CategoryBreakdownItem {
   /** Participacao no total do recorte. `null` quando o total e zero. */
   readonly percentage: number | null;
   readonly transactionCount: number;
+  /**
+   * Categorias que foram somadas dentro desta fatia.
+   * Preenchido apenas na fatia agregada de `groupSmallCategories`, para que a
+   * UI consiga dizer o que esta dentro de "Outros" em vez de esconder.
+   */
+  readonly groupedCategoryIds?: readonly ID[];
 }
 
 export interface CategoryBreakdown {
@@ -104,6 +110,7 @@ export function groupSmallCategories(
     totalCents: tailTotal,
     percentage: safePercentage(tailTotal, breakdown.totalCents),
     transactionCount: tailCount,
+    groupedCategoryIds: tail.map((item) => item.categoryId),
   };
 
   return {

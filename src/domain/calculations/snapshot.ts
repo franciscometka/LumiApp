@@ -1,4 +1,5 @@
-import type { Period, PeriodResolver } from '../shared/period';
+import type { Period, PeriodResolver, PeriodTemporality } from '../shared/period';
+import { periodTemporality } from '../shared/period';
 import type { PlainDate } from '../shared/plain-date';
 import type { MonthlyPlan } from '../entities/monthly-plan';
 import type { Transaction } from '../entities/transaction';
@@ -28,6 +29,12 @@ import { calculateTotals } from './totals';
 export interface PeriodSnapshot {
   readonly period: Period;
   readonly today: PlainDate;
+  /**
+   * Passado, atual ou futuro. Fica na fotografia para que a UI nunca
+   * precise recalcular — e para que projecao e saldo realizado so apareçam
+   * onde fazem sentido.
+   */
+  readonly temporality: PeriodTemporality;
 
   readonly totals: PeriodTotals;
   readonly expenseByCategory: CategoryBreakdown;
@@ -73,6 +80,7 @@ export function buildSnapshot({
   return {
     period,
     today,
+    temporality: periodTemporality(period, today),
     totals,
     expenseByCategory: calculateCategoryBreakdown(current, { type: 'expense' }),
     incomeByCategory: calculateCategoryBreakdown(current, { type: 'income' }),
@@ -82,7 +90,7 @@ export function buildSnapshot({
       ...(dueSoonDays === undefined ? {} : { dueSoonDays }),
     }),
     plan: calculatePlanProgress(totals, plan),
-    projection: calculateProjection({ totals, period, today }),
+    projection: calculateProjection({ totals, period, today, transactions: current }),
     salaryRunway:
       salaryDay === undefined ? null : calculateSalaryRunway(totals, today, salaryDay),
     comparison: comparePeriods(totals, previousTotals),

@@ -18,19 +18,36 @@ export function PageShell({
   description,
   children,
   className,
+  hideTitle = false,
 }: {
   title: string;
   description?: string;
   children?: ReactNode;
   className?: string;
+  /**
+   * Esconde o titulo visualmente, sem remove-lo da arvore de acessibilidade.
+   *
+   * A Dashboard usa isto: o saldo precisa ser a primeira coisa que a pessoa ve
+   * no celular, e um "Inicio" de 40px acima dele empurraria o numero mais
+   * importante da tela para baixo sem informar nada que o menu ja nao diga.
+   */
+  hideTitle?: boolean;
 }) {
   return (
     <div className={cn('mx-auto w-full max-w-3xl px-4 py-6 lg:px-8 lg:py-10', className)}>
-      <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
+      <h1
+        className={cn(
+          hideTitle ? 'sr-only' : 'text-2xl font-semibold tracking-tight lg:text-3xl',
+        )}
+      >
+        {title}
+      </h1>
       {description === undefined ? null : (
         <p className="text-muted-foreground mt-2 text-[15px] leading-relaxed">{description}</p>
       )}
-      {children === undefined ? null : <div className="mt-8">{children}</div>}
+      {children === undefined ? null : (
+        <div className={hideTitle ? undefined : 'mt-8'}>{children}</div>
+      )}
     </div>
   );
 }
