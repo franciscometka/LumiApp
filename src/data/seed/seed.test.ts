@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { calculateCommitments } from '@/domain/calculations/commitments';
 import { calculateTotals } from '@/domain/calculations/totals';
+import * as debtRules from '@/domain/entities/debt';
 import { formatMoney } from '@/domain/shared/money';
 import { toMonthKey, toPlainDate } from '@/domain/shared/plain-date';
 
@@ -35,6 +36,31 @@ describe('buildSeedData', () => {
     expect(dados.cards.map((card) => card.currentInvoiceCents)).toEqual([37400, 76500]);
     expect(dados.debts[0]?.installmentCents).toBe(44000);
     expect(dados.monthlyPlans[0]?.spendingLimitCents).toBe(250000);
+  });
+
+  it('nao inventa o prazo do emprestimo', () => {
+    // O briefing informa apenas "Emprestimo: R$ 440". Nada alem disso pode
+    // aparecer como se fosse dado do usuario.
+    const emprestimo = dados.debts[0];
+
+    expect(emprestimo?.installmentCents).toBe(44000);
+    expect(emprestimo?.totalInstallments).toBeUndefined();
+    expect(emprestimo?.paidInstallments).toBeUndefined();
+    expect(emprestimo?.startDate).toBeUndefined();
+
+    expect(debtRules.progressPercentage(emprestimo as never)).toBeNull();
+    expect(debtRules.remainingAmount(emprestimo as never)).toBeNull();
+    expect(debtRules.finalMonth(emprestimo as never)).toBeNull();
+    expect(debtRules.isSettled(emprestimo as never)).toBe(false);
+  });
+
+  it('separa renda gerada de dinheiro vindo da reserva', () => {
+    const totais = calculateTotals([...dados.transactions]);
+
+    expect(formatMoney(totais.income)).toBe('R$ 3.100,00');
+    expect(formatMoney(totais.earnedIncome)).toBe('R$ 3.000,00');
+    expect(formatMoney(totais.transferIn)).toBe('R$ 100,00');
+    expect(totais.transferCount).toBe(1);
   });
 
   it('vincula transacoes a cartoes e divida', () => {

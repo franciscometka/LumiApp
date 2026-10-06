@@ -27,6 +27,7 @@ const transacaoBase = {
   description: 'Internet',
   amountCents: toMoney(12000),
   type: 'expense' as const,
+  flow: 'operational' as const,
   categoryId: 'cat-internet',
   date: toPlainDate('2026-10-10'),
   status: 'paid' as const,

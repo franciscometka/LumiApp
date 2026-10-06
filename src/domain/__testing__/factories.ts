@@ -44,6 +44,7 @@ export function makeTransaction(overrides: TransactionOverrides = {}): Transacti
     description: 'Lancamento',
     amountCents: cents(amountCents ?? 10000),
     type: 'expense',
+    flow: 'operational',
     categoryId: 'cat-outros',
     date: date(dateValue ?? '2026-10-10'),
     status: 'paid',
@@ -106,7 +107,14 @@ export function briefingScenario(): Transaction[] {
   return [
     makeIncome({ description: 'Salario', amountCents: 230000, categoryId: 'cat-salario', date: '2026-10-05' }),
     makeIncome({ description: 'Renda extra', amountCents: 30000, categoryId: 'cat-extra', date: '2026-10-12' }),
-    makeIncome({ description: 'Dinheiro guardado', amountCents: 10000, categoryId: 'cat-reserva', date: '2026-10-15' }),
+    // Reserva nao e renda gerada: entra como transferencia.
+    makeIncome({
+      description: 'Dinheiro guardado',
+      amountCents: 10000,
+      categoryId: 'cat-reserva',
+      date: '2026-10-15',
+      flow: 'transfer',
+    }),
     makeIncome({ description: 'Bonus', amountCents: 40000, categoryId: 'cat-bonus', date: '2026-10-20' }),
 
     makeExpense({ description: 'Carro', amountCents: 91100, categoryId: 'cat-carro', date: '2026-10-08' }),

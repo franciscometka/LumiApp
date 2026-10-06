@@ -182,10 +182,18 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
       id: SEED_IDS.debts.emprestimo,
       name: 'Empréstimo',
       installmentCents: moneyFromReais(440),
-      totalInstallments: 24,
-      paidInstallments: 9,
       dueDay: 20,
-      startDate: dayIn(month, 20),
+      // Prazo deliberadamente AUSENTE.
+      //
+      // O briefing informa apenas "Empréstimo: R$ 440". Total de parcelas,
+      // parcelas pagas, saldo devedor e data final nao foram informados —
+      // preenche-los aqui transformaria um chute em barra de progresso,
+      // previsao de quitacao e saldo devedor: tres numeros falsos derivados
+      // de um valor que ninguem forneceu.
+      //
+      // Com os campos ausentes, o app diz honestamente que nao sabe e
+      // convida a completar o cadastro.
+      notes: 'Parcela mensal conhecida. Prazo ainda nao informado.',
     }),
   ];
 
@@ -226,6 +234,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.salario,
+      flow: 'operational',
       description: 'Salário',
       amountCents: moneyFromReais(2300),
       type: 'income',
@@ -237,6 +246,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.rendaExtra,
+      flow: 'operational',
       description: 'Renda extra',
       amountCents: moneyFromReais(300),
       type: 'income',
@@ -251,6 +261,10 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
       description: 'Dinheiro guardado utilizado',
       amountCents: moneyFromReais(100),
       type: 'income',
+      // Este dinheiro ja era do usuario: fica disponivel no mes, mas nao foi
+      // gerado por ele. Entra no "disponivel" (R$ 3.100) e fica de fora da
+      // "renda gerada" (R$ 3.000).
+      flow: 'transfer',
       categoryId: SEED_IDS.categories.reserva,
       date: dayIn(month, 15),
       status: 'paid',
@@ -259,6 +273,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.bonus,
+      flow: 'operational',
       description: 'Bônus',
       amountCents: moneyFromReais(400),
       type: 'income',
@@ -271,6 +286,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.carro,
+      flow: 'operational',
       description: 'Carro',
       amountCents: moneyFromReais(911),
       type: 'expense',
@@ -282,6 +298,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.internet,
+      flow: 'operational',
       description: 'Internet',
       amountCents: moneyFromReais(120),
       type: 'expense',
@@ -294,6 +311,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.cartaoInter,
+      flow: 'operational',
       description: 'Cartão Inter',
       amountCents: moneyFromReais(374),
       type: 'expense',
@@ -306,6 +324,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.cartaoMagalu,
+      flow: 'operational',
       description: 'Cartão Magalu',
       amountCents: moneyFromReais(765),
       type: 'expense',
@@ -318,6 +337,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     transactionCodec.parse({
       ...base,
       id: SEED_IDS.transactions.emprestimo,
+      flow: 'operational',
       description: 'Empréstimo',
       amountCents: moneyFromReais(440),
       type: 'expense',

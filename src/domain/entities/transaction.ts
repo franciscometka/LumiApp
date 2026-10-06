@@ -28,6 +28,30 @@ export const PAYMENT_METHODS = [
 ] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+/**
+ * Natureza do fluxo: o dinheiro foi gerado/consumido, ou apenas mudou de lugar?
+ *
+ * - `operational`: dinheiro que entrou ou saiu do patrimonio neste periodo —
+ *   salario, renda extra, bonus, uma compra, uma conta.
+ * - `transfer`: dinheiro que ja era seu e apenas trocou de lugar — usar a
+ *   reserva, mover entre contas, guardar uma sobra.
+ *
+ * Sem esta distincao, usar R$ 100 da reserva aumentaria a "renda do mes" em
+ * R$ 100, e qualquer metrica construida sobre renda (taxa de poupanca,
+ * percentual de renda comprometido, comparacao entre meses) herdaria o erro.
+ *
+ * O campo tem padrao `operational` no schema: dados antigos, gravados antes
+ * desta distincao existir, continuam validos e sao lidos como operacionais —
+ * nao e preciso migracao.
+ */
+export const FLOW_NATURES = ['operational', 'transfer'] as const;
+export type FlowNature = (typeof FLOW_NATURES)[number];
+
+export const FLOW_NATURE_LABELS: Record<FlowNature, string> = {
+  operational: 'Movimento do mes',
+  transfer: 'Transferencia',
+};
+
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   pix: 'Pix',
   debit: 'Debito',
@@ -50,6 +74,8 @@ export const transactionSchema = z.object({
   description: shortTextSchema,
   amountCents: positiveMoneySchema,
   type: z.enum(TRANSACTION_TYPES),
+  /** Ver `FLOW_NATURES`. Ausente nos dados = `operational`. */
+  flow: z.enum(FLOW_NATURES).default('operational'),
   categoryId: idSchema,
   date: plainDateSchema,
   status: z.enum(TRANSACTION_STATUSES),
@@ -94,6 +120,16 @@ export function isPending(transaction: Transaction): boolean {
 
 export function isDeleted(transaction: Transaction): boolean {
   return transaction.deletedAt !== undefined;
+}
+
+/** Dinheiro que apenas mudou de lugar; nao gera nem consome patrimonio. */
+export function isTransfer(transaction: Transaction): boolean {
+  return transaction.flow === 'transfer';
+}
+
+/** Dinheiro efetivamente gerado ou consumido no periodo. */
+export function isOperational(transaction: Transaction): boolean {
+  return transaction.flow === 'operational';
 }
 
 /**
