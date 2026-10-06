@@ -59,3 +59,61 @@ export function formatPercentage(
   }
   return `${rounded < 0 ? '-' : ''}${formatted}%`;
 }
+
+/**
+ * Percentuais de APRESENTACAO de um conjunto, somando exatamente 100.
+ *
+ * Arredondar cada fatia por conta propria produz totais errados: as quatro
+ * fatias do briefing (44 + 35 + 17 + 5) somam 101%, e uma legenda que soma 101
+ * faz a pessoa duvidar da conta toda, nao do arredondamento.
+ *
+ * O metodo e o do **maior resto**: cada fatia fica com a parte inteira do seu
+ * percentual e a sobra vai para quem tem o maior resto descartado. Assim o
+ * ajuste de 1 ponto cai sobre quem mais perdeu no arredondamento, em vez de
+ * sobre a primeira ou a ultima fatia.
+ *
+ * Isto e exibicao, nada mais. Os percentuais internos (`safePercentage`) e os
+ * valores em reais continuam exatos e nenhum calculo financeiro usa a saida
+ * desta funcao.
+ *
+ * `null` quando nao existe percentual a distribuir: lista vazia, total zero ou
+ * qualquer valor negativo — nenhum desses casos tem fatia definida, e devolver
+ * zeros seria fabricar um dado.
+ */
+export function displayPercentages(
+  values: readonly number[],
+  decimals = 0,
+): readonly number[] | null {
+  if (values.length === 0) return null;
+  if (values.some((value) => value < 0 || !Number.isFinite(value))) return null;
+
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return null;
+
+  const scale = 10 ** decimals;
+  const target = 100 * scale;
+
+  const slices = values.map((value, index) => {
+    const exact = (value / total) * target;
+    const floor = Math.floor(exact);
+    return { index, floor, remainder: exact - floor };
+  });
+  const assigned = slices.reduce((sum, slice) => sum + slice.floor, 0);
+
+  // Em aritmetica exata a sobra cabe em [0, n); o clamp cobre o residuo de
+  // ponto flutuante, que aqui e inofensivo porque nada disso e dinheiro.
+  const leftover = Math.min(Math.max(Math.round(target - assigned), 0), values.length);
+
+  // Maior resto primeiro; empate resolvido pelo indice, para que a mesma
+  // entrada produza sempre a mesma saida.
+  const bonusIndexes = new Set(
+    [...slices]
+      .sort((a, b) => (b.remainder !== a.remainder ? b.remainder - a.remainder : a.index - b.index))
+      .slice(0, leftover)
+      .map((slice) => slice.index),
+  );
+
+  return slices.map(
+    (slice) => (slice.floor + (bonusIndexes.has(slice.index) ? 1 : 0)) / scale,
+  );
+}

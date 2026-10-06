@@ -7,8 +7,10 @@ import { cn } from '@/lib/utils';
  *
  * Os dois saldos sao coisas diferentes e aparecem rotulados como tal:
  *
- * - "Saldo disponível" e o REALIZADO — o que de fato ja passou pela conta.
- *   E o numero que responde "posso gastar?".
+ * - "Saldo atual" e o REALIZADO — o que de fato ja passou pela conta. Nao e
+ *   "disponivel": com faturas por vencer, parte dele ja esta comprometida, e
+ *   chamar de disponivel convidaria a gastar dinheiro que tem dono.
+ *   E o numero que responde "quanto tenho agora?".
  * - "Projetado para o fim do mês" inclui o que ainda vai entrar e sair. E o
  *   numero que responde "vou fechar no azul?".
  *
@@ -53,7 +55,7 @@ export function BalanceHero({ snapshot }: { snapshot: PeriodSnapshot }) {
 }
 
 const HERO_COPY = {
-  current: { label: 'Saldo disponível' },
+  current: { label: 'Saldo atual' },
   past: { label: 'Saldo do mês' },
   future: { label: 'Saldo previsto' },
 } as const;

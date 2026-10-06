@@ -8,7 +8,7 @@ import { OTHER_CATEGORIES_ID } from '@/domain/calculations/by-category';
 import type { Category } from '@/domain/entities/category';
 import type { ID } from '@/domain/shared/id';
 import { formatMoney } from '@/domain/shared/money';
-import { formatPercentage } from '@/domain/shared/percentage';
+import { displayPercentages, formatPercentage } from '@/domain/shared/percentage';
 
 /**
  * Distribuicao de gastos por categoria.
@@ -50,10 +50,23 @@ export function CategoryDonut({
     );
   }
 
+  /**
+   * Percentuais da legenda normalizados de uma vez, pelo maior resto, a partir
+   * dos valores exatos em centavos.
+   *
+   * Arredondar fatia por fatia exibia 44 + 35 + 17 + 5 = 101%, e uma legenda
+   * que nao fecha 100 faz desconfiar da conta, nao do arredondamento. Isto
+   * muda apenas o texto: as fatias desenhadas continuam vindo de `totalCents`
+   * e o `item.percentage` do dominio segue intocado.
+   */
+  const normalized = displayPercentages(breakdown.items.map((item) => item.totalCents));
+
   const data = breakdown.items.map((item, index) => ({
     item,
     color: sliceColor(item, index),
     name: resolveName(item, categoriesById),
+    // Sem normalizacao possivel, vale o percentual individual de antes.
+    percentage: normalized?.[index] ?? item.percentage,
   }));
 
   return (
@@ -101,6 +114,7 @@ export function CategoryDonut({
               name={entry.name}
               color={entry.color}
               item={entry.item}
+              percentage={entry.percentage}
               categoriesById={categoriesById}
             />
           ))}
@@ -125,11 +139,13 @@ function Legend({
   name,
   color,
   item,
+  percentage,
   categoriesById,
 }: {
   name: string;
   color: string;
   item: CategoryBreakdownItem;
+  percentage: number | null;
   categoriesById: ReadonlyMap<ID, Category>;
 }) {
   // "Outros" diz o que escondeu. Uma fatia anonima com 12% dos gastos e
@@ -159,7 +175,7 @@ function Legend({
         ) : null}
       </div>
       <span className="text-muted-foreground w-10 shrink-0 text-right text-xs tabular-nums">
-        {formatPercentage(item.percentage)}
+        {formatPercentage(percentage)}
       </span>
     </li>
   );

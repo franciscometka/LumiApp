@@ -4,6 +4,7 @@ import { toMoney } from './money';
 import {
   changePercentage,
   clampPercentage,
+  displayPercentages,
   formatPercentage,
   roundPercentage,
   safePercentage,
@@ -89,5 +90,91 @@ describe('formatPercentage', () => {
     expect(formatPercentage(null, { fallback: 'sem dados' })).toBe('sem dados');
     expect(formatPercentage(Number.NaN)).toBe('—');
     expect(formatPercentage(Number.POSITIVE_INFINITY)).toBe('—');
+  });
+});
+
+describe('displayPercentages', () => {
+  const soma = (values: readonly number[]) => values.reduce((total, v) => total + v, 0);
+
+  it('fecha 100 no cenario que antes somava 101', () => {
+    // Outubro do briefing: Cartao 1.139 + Carro 911 + Emprestimo 440 +
+    // Internet 120 = R$ 2.610. Arredondando cada fatia por conta propria da
+    // 44 + 35 + 17 + 5 = 101 — era o que a legenda do donut exibia.
+    const cents = [113900, 91100, 44000, 12000];
+
+    const individuais = cents.map((value) => roundPercentage((value / 261000) * 100, 0));
+    expect(soma(individuais)).toBe(101);
+
+    const exibidos = displayPercentages(cents);
+    expect(exibidos).toEqual([44, 35, 17, 4]);
+    expect(soma(exibidos ?? [])).toBe(100);
+  });
+
+  it('devolve null quando nao ha percentual a distribuir', () => {
+    expect(displayPercentages([])).toBeNull();
+    expect(displayPercentages([0])).toBeNull();
+    expect(displayPercentages([0, 0, 0])).toBeNull();
+  });
+
+  it('devolve null diante de valor negativo ou nao finito', () => {
+    // Um conjunto com sinais mistos nao tem "fatia de um todo".
+    expect(displayPercentages([-100, 500])).toBeNull();
+    expect(displayPercentages([100, -100])).toBeNull();
+    expect(displayPercentages([Number.NaN, 100])).toBeNull();
+    expect(displayPercentages([Number.POSITIVE_INFINITY, 100])).toBeNull();
+  });
+
+  it('da 100% a uma fatia unica', () => {
+    expect(displayPercentages([50000])).toEqual([100]);
+    expect(displayPercentages([1])).toEqual([100]);
+  });
+
+  it('distribui tres fatias iguais fechando 100', () => {
+    // 33,33 cada: o ponto que falta vai para a primeira, por desempate de
+    // indice. O importante e que a soma feche e a escolha seja estavel.
+    const exibidos = displayPercentages([1000, 1000, 1000]);
+    expect(exibidos).toEqual([34, 33, 33]);
+    expect(soma(exibidos ?? [])).toBe(100);
+  });
+
+  it('respeita decimals = 1', () => {
+    const exibidos = displayPercentages([1000, 1000, 1000], 1);
+    expect(exibidos).toEqual([33.4, 33.3, 33.3]);
+    expect(soma(exibidos ?? [])).toBeCloseTo(100, 10);
+
+    const briefing = displayPercentages([113900, 91100, 44000, 12000], 1);
+    expect(soma(briefing ?? [])).toBeCloseTo(100, 10);
+  });
+
+  it('e deterministico quando os restos empatam', () => {
+    // Sete fatias iguais: 14,2857 cada, restos identicos. Os dois pontos de
+    // sobra precisam cair sempre nas mesmas fatias.
+    const valores = [10, 10, 10, 10, 10, 10, 10];
+    const exibidos = displayPercentages(valores);
+
+    expect(exibidos).toEqual([15, 15, 14, 14, 14, 14, 14]);
+    expect(soma(exibidos ?? [])).toBe(100);
+    expect(displayPercentages(valores)).toEqual(exibidos);
+  });
+
+  it('nunca estoura nem falta, em muitos formatos de carteira', () => {
+    const carteiras = [
+      [1],
+      [1, 2],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [99999, 1],
+      [1, 1, 99998],
+      [12345, 6789, 101112, 131, 4],
+      [333, 333, 334],
+    ];
+
+    for (const carteira of carteiras) {
+      const exibidos = displayPercentages(carteira);
+      expect(exibidos).not.toBeNull();
+      expect(soma(exibidos ?? [])).toBe(100);
+      expect(exibidos).toHaveLength(carteira.length);
+      // Nenhuma fatia pode ficar negativa por causa do ajuste.
+      expect((exibidos ?? []).every((value) => value >= 0)).toBe(true);
+    }
   });
 });
