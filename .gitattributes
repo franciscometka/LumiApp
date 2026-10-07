@@ -1,0 +1,25 @@
+# Fim de linha normalizado.
+#
+# O repositorio estava com 122 arquivos em LF e 28 em CRLF, commitados assim —
+# `core.autocrlf` desligado e nenhum `.gitattributes`. Misturar os dois faz
+# qualquer ferramenta que reescreva um arquivo produzir um diff de centenas de
+# linhas sem uma unica mudanca real, o que esconde a alteracao de verdade na
+# revisao e gera conflito a cada merge.
+#
+# `text=auto eol=lf` resolve isso no limite do git: o repositorio guarda LF
+# sempre, independente do sistema de quem edita. No Windows os editores
+# modernos lidam com LF sem problema.
+* text=auto eol=lf
+
+# Binarios nunca sao convertidos.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary

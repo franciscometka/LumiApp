@@ -1,0 +1,9 @@
+# Saida de build e dependencias: reformatar isso nao faz sentido e e lento.
+.next/
+out/
+build/
+node_modules/
+next-env.d.ts
+
+# Lockfile: pertence ao gerenciador de pacotes, nao ao formatador.
+package-lock.json
