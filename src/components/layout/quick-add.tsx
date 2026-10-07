@@ -1,14 +1,10 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { Suspense } from 'react';
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { CreateTransactionSheet, currentMonthKey } from '@/features/transactions/create-transaction-sheet';
+import { useSelectedMonth } from '@/features/period/use-selected-month';
 import { useUiStore } from '@/stores/ui-store';
 
 /**
@@ -37,30 +33,22 @@ export function QuickAddFab() {
 }
 
 /**
- * Placeholder do lote 3.
+ * Sheet de criacao, montada na casca para funcionar em qualquer tela.
  *
- * O formulario real — com valor mascarado, categoria, data e status — chega no
- * lote 5, junto com as mutations. Aqui o objetivo e so provar que o caminho
- * FAB -> store de UI -> sheet funciona nos dois tamanhos de tela.
+ * O limite de Suspense existe porque `useSelectedMonth` le `useSearchParams`:
+ * sem ele, a leitura da query string arrastaria toda a casca para
+ * renderizacao dinamica. O fallback nao desenha nada — a sheet comeca fechada,
+ * e o mes corrente e um padrao correto para o instante antes da hidratacao.
  */
 export function QuickAddSheet() {
-  const isOpen = useUiStore((state) => state.isQuickAddOpen);
-  const setQuickAddOpen = useUiStore((state) => state.setQuickAddOpen);
-
   return (
-    <Sheet open={isOpen} onOpenChange={setQuickAddOpen}>
-      <SheetContent side="bottom" className="sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>Nova transação</SheetTitle>
-          <SheetDescription>
-            O formulário de lançamento entra no Lote 5, junto com a tela de transações.
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="border-border/70 text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
-          Em breve
-        </div>
-      </SheetContent>
-    </Sheet>
+    <Suspense fallback={<CreateTransactionSheet month={currentMonthKey()} />}>
+      <MonthAwareQuickAdd />
+    </Suspense>
   );
+}
+
+function MonthAwareQuickAdd() {
+  const { month } = useSelectedMonth();
+  return <CreateTransactionSheet month={month} />;
 }

@@ -21,4 +21,19 @@ export const queryKeys = {
    * voltar para um mes ja visitado reaproveita o resultado em vez de recarregar.
    */
   monthlySnapshot: (month: MonthKey) => [...queryKeys.dashboard(), 'snapshot', month] as const,
+
+  transactions: () => [...queryKeys.all, 'transactions'] as const,
+  /**
+   * A chave tem o mes e so o mes.
+   *
+   * Busca, tipo, categoria e status NAO entram aqui de proposito: sao recortes
+   * de uma lista que o cliente ja tem inteira na memoria. Coloca-los na chave
+   * criaria uma entrada de cache por combinacao de filtro — dezenas de copias
+   * dos mesmos registros, cada uma precisando ser invalidada depois de uma
+   * edicao. Filtrar o resultado e mais barato e nunca fica fora de sincronia.
+   */
+  transactionsByMonth: (month: MonthKey) => [...queryKeys.transactions(), 'month', month] as const,
+
+  /** Categorias mudam raramente e o formulario depende delas. */
+  categories: () => [...queryKeys.all, 'categories'] as const,
 } as const;

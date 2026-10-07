@@ -36,7 +36,9 @@ function SheetContent({
   children,
   side = 'bottom',
   ...props
-}: ComponentProps<typeof SheetPrimitive.Content> & { side?: 'bottom' | 'right' }) {
+}: ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: 'bottom' | 'right' | 'responsive';
+}) {
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -51,6 +53,23 @@ function SheetContent({
               'pb-[max(1.25rem,env(safe-area-inset-bottom))]',
               'data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
             ),
+          /**
+           * Painel que sobe no celular e vira modal centrado no desktop.
+           *
+           * E a mesma arvore nos dois tamanhos — o formulario de transacao
+           * nao pode existir em duas versoes, cada uma com seu proprio bug.
+           * Trocar de componente por media query duplicaria o estado; trocar
+           * de classes nao.
+           */
+          side === 'responsive' &&
+            cn(
+              'inset-x-0 bottom-0 max-h-[88dvh] rounded-t-2xl border-t p-5',
+              'pb-[max(1.25rem,env(safe-area-inset-bottom))]',
+              'sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2',
+              'sm:w-[28rem] sm:max-w-[calc(100vw-2rem)] sm:max-h-[86dvh]',
+              'sm:-translate-x-1/2 sm:-translate-y-1/2',
+              'sm:rounded-2xl sm:border sm:p-6',
+            ),
           side === 'right' &&
             cn(
               'inset-y-0 right-0 h-full w-full max-w-sm border-l p-6',
@@ -60,10 +79,15 @@ function SheetContent({
         )}
         {...props}
       >
-        {side === 'bottom' ? (
+        {side === 'bottom' || side === 'responsive' ? (
           <div
             aria-hidden
-            className="bg-border mx-auto h-1 w-10 shrink-0 rounded-full"
+            className={cn(
+              'bg-border mx-auto h-1 w-10 shrink-0 rounded-full',
+              // No modo responsivo o painel deixa de ser gaveta no desktop, e
+              // uma alca de arrastar ali passaria a nao significar nada.
+              side === 'responsive' && 'sm:hidden',
+            )}
           />
         ) : null}
 

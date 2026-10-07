@@ -363,3 +363,22 @@ export function formatMonthKey(key: MonthKey): string {
 export function formatMonthKeyShort(key: MonthKey): string {
   return shortMonthYearFormatter.format(toUtcDate(`${key}-01`));
 }
+
+/**
+ * Cabecalho de um grupo de dia: "Hoje", "Ontem", "Amanha" ou a data completa.
+ *
+ * O rotulo relativo cobre os tres dias que o usuario reconhece de imediato e
+ * que respondem a maior parte das consultas. Fora dessa janela, dizer
+ * "ha 4 dias" obrigaria a pessoa a fazer a conta de cabeca para saber que dia
+ * foi — a data e mais curta de ler.
+ *
+ * Recebe `today` em vez de ler o relogio: assim a funcao continua pura e o
+ * teste nao depende do dia em que roda.
+ */
+export function formatRelativeDay(date: PlainDate, today: PlainDate): string {
+  const offset = differenceInDays(today, date);
+  if (offset === 0) return 'Hoje';
+  if (offset === -1) return 'Ontem';
+  if (offset === 1) return 'Amanhã';
+  return `${formatWeekday(date)}, ${formatPlainDateLong(date)}`;
+}

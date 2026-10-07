@@ -14,6 +14,7 @@ import {
   formatMonthKey,
   formatPlainDate,
   formatPlainDateLong,
+  formatRelativeDay,
   fromDayNumber,
   getParts,
   isAfter,
@@ -275,5 +276,47 @@ describe('formatacao pt-BR', () => {
     expect(formatPlainDate(toPlainDate('2026-10-05'))).toBe('05/10/2026');
     expect(formatMonthKey(toMonthKey('2026-10'))).toBe('outubro de 2026');
     expect(formatMonthKey(toMonthKey('2026-02'))).toBe('fevereiro de 2026');
+  });
+});
+
+describe('formatRelativeDay', () => {
+  const hoje = toPlainDate('2026-10-05');
+
+  it('nomeia os tres dias que a pessoa reconhece de imediato', () => {
+    expect(formatRelativeDay(toPlainDate('2026-10-05'), hoje)).toBe('Hoje');
+    expect(formatRelativeDay(toPlainDate('2026-10-04'), hoje)).toBe('Ontem');
+    expect(formatRelativeDay(toPlainDate('2026-10-06'), hoje)).toBe('Amanhã');
+  });
+
+  it('fora dessa janela usa a data, nao "ha N dias"', () => {
+    // "ha 4 dias" obrigaria a pessoa a fazer a conta para saber que dia foi.
+    expect(formatRelativeDay(toPlainDate('2026-10-01'), hoje)).toBe(
+      'quinta-feira, 1 de outubro',
+    );
+  });
+
+  it('atravessa a virada de mes', () => {
+    const primeiro = toPlainDate('2026-10-01');
+    expect(formatRelativeDay(toPlainDate('2026-09-30'), primeiro)).toBe('Ontem');
+    expect(formatRelativeDay(toPlainDate('2026-10-02'), primeiro)).toBe('Amanhã');
+  });
+
+  it('atravessa a virada de ano', () => {
+    const reveillon = toPlainDate('2027-01-01');
+    expect(formatRelativeDay(toPlainDate('2026-12-31'), reveillon)).toBe('Ontem');
+  });
+
+  it('atravessa 29 de fevereiro em ano bissexto', () => {
+    const primeiroDeMarco = toPlainDate('2028-03-01');
+    expect(formatRelativeDay(toPlainDate('2028-02-29'), primeiroDeMarco)).toBe('Ontem');
+  });
+
+  it('nao desloca o dia por fuso horario', () => {
+    // O teste roda com TZ=America/Sao_Paulo. Um `new Date('2026-10-05')`
+    // interpretado como meia-noite UTC viraria 4 de outubro aqui.
+    expect(formatRelativeDay(toPlainDate('2026-10-05'), toPlainDate('2026-10-05'))).toBe('Hoje');
+    expect(formatRelativeDay(toPlainDate('2026-01-01'), toPlainDate('2026-01-03'))).toBe(
+      'quinta-feira, 1 de janeiro',
+    );
   });
 });

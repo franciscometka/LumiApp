@@ -144,3 +144,25 @@ export function isCardCommitment(transaction: Transaction): boolean {
 export function isDebtCommitment(transaction: Transaction): boolean {
   return transaction.debtId !== undefined;
 }
+
+/**
+ * O estado interno e um so (`paid` | `pending`), mas a palavra muda com o
+ * lado do fluxo: um salario nao e "pago" pelo usuario, e recebido por ele.
+ *
+ * A traducao fica aqui, junto da entidade, e nao espalhada pelos componentes —
+ * caso contrario cada tela inventaria o proprio vocabulario.
+ */
+export function statusLabel(type: TransactionType, status: TransactionStatus): string {
+  if (status === 'pending') return 'Pendente';
+  return type === 'income' ? 'Recebido' : 'Pago';
+}
+
+/** Rotulo da acao que LEVA ao estado pago/recebido. */
+export function markAsPaidLabel(type: TransactionType): string {
+  return type === 'income' ? 'Marcar como recebido' : 'Marcar como pago';
+}
+
+/** O estado oposto, para alternar com um toque. */
+export function toggledStatus(status: TransactionStatus): TransactionStatus {
+  return status === 'paid' ? 'pending' : 'paid';
+}
