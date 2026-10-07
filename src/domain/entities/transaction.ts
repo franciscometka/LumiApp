@@ -133,12 +133,29 @@ export function isOperational(transaction: Transaction): boolean {
 }
 
 /**
- * Compromisso com cartao: ou a transacao esta vinculada a um cartao, ou foi
- * paga no credito. Cobre o lancamento avulso no credito antes de existir
- * cadastro de cartao.
+ * Como um gasto se liga a um cartao.
+ *
+ * `paymentMethod === 'credit'` sem `cardId` continua valendo como compromisso
+ * de cartao, e isso e uma REGRA DE TRANSICAO, nao um descuido: existem
+ * lancamentos gravados antes de haver cadastro de cartoes, e remover esse
+ * caminho faria o percentual de comprometimento desses meses cair sozinho —
+ * um numero que estava certo passaria a estar errado por causa de uma
+ * mudanca de codigo.
+ *
+ * A presenca de `cardId` PREVALECE: um lancamento identificado nunca e
+ * contado tambem como nao identificado. Os dois caminhos sao exclusivos.
  */
+export type CardLink = 'identified' | 'unidentified' | null;
+
+export function cardLink(transaction: Transaction): CardLink {
+  if (transaction.cardId !== undefined) return 'identified';
+  if (transaction.paymentMethod === 'credit') return 'unidentified';
+  return null;
+}
+
+/** Compromisso com cartao, identificado ou nao. */
 export function isCardCommitment(transaction: Transaction): boolean {
-  return transaction.cardId !== undefined || transaction.paymentMethod === 'credit';
+  return cardLink(transaction) !== null;
 }
 
 export function isDebtCommitment(transaction: Transaction): boolean {

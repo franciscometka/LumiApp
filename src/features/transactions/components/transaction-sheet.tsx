@@ -12,7 +12,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import type { Card } from '@/domain/entities/card';
 import type { Category } from '@/domain/entities/category';
+import type { Debt } from '@/domain/entities/debt';
 import type { Transaction, TransactionType } from '@/domain/entities/transaction';
 import type { FLOW_NATURES } from '@/domain/entities/transaction';
 import {
@@ -33,6 +35,8 @@ import {
   needsAdvancedSection,
   validateForm,
 } from '../transaction-form';
+
+import { linkOptions } from '../link-options';
 
 import { MoneyInput } from './money-input';
 
@@ -61,6 +65,9 @@ export interface TransactionSheetProps {
   /** Ausente = criacao. */
   readonly transaction?: Transaction | undefined;
   readonly categories: readonly Category[];
+  /** Inclui excluidos: um vinculo historico precisa continuar resolvivel. */
+  readonly cards: readonly Card[];
+  readonly debts: readonly Debt[];
   readonly isSaving: boolean;
   readonly saveError: Error | null;
   /** Deve resolver apenas DEPOIS da persistencia confirmar. */
@@ -75,6 +82,8 @@ export function TransactionSheet({
   onOpenChange,
   transaction,
   categories,
+  cards,
+  debts,
   isSaving,
   saveError,
   onSubmit,
@@ -292,17 +301,60 @@ export function TransactionSheet({
               </Field>
 
               {/*
-                Cartao e divida: os vinculos existem no dominio e sao
-                preservados na edicao, mas escolher um exige o cadastro, que
-                chega nos lotes de Cartoes e Dividas. Mostrar um seletor vazio
-                aqui prometeria algo que a tela nao entrega.
+                Cartao e divida.
+
+                `linkOptions` garante que o valor atual SEMPRE exista entre as
+                opcoes. Um `<select>` cujo value nao casa com nenhuma option
+                nao reclama: ele passa a valer '', e salvar o formulario
+                apagaria um vinculo historico sem nenhum sinal na tela.
+                Quando a entidade foi excluida, a opcao aparece rotulada como
+                removida — estado explicito, nao vinculo em branco.
               */}
-              {values.cardId === '' && values.debtId === '' ? null : (
-                <p className="text-muted-foreground text-xs">
-                  Este lançamento está vinculado a {values.cardId === '' ? 'uma dívida' : 'um cartão'}.
-                  O vínculo é preservado ao salvar.
-                </p>
-              )}
+              <Field
+                label="Cartão"
+                htmlFor={`${fieldId}-card`}
+                hint="Para saber quais gastos são deste cartão. Não altera a fatura."
+              >
+                <Select
+                  id={`${fieldId}-card`}
+                  value={values.cardId}
+                  onChange={(event) => {
+                    update('cardId', event.target.value);
+                  }}
+                >
+                  <option value="">Nenhum</option>
+                  {linkOptions(cards, values.cardId, (name) =>
+                    name === null ? 'Cartão removido' : `${name} (removido)`,
+                  ).map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field
+                label="Dívida"
+                htmlFor={`${fieldId}-debt`}
+                hint="Relaciona o lançamento à dívida. Não avança as parcelas pagas."
+              >
+                <Select
+                  id={`${fieldId}-debt`}
+                  value={values.debtId}
+                  onChange={(event) => {
+                    update('debtId', event.target.value);
+                  }}
+                >
+                  <option value="">Nenhuma</option>
+                  {linkOptions(debts, values.debtId, (name) =>
+                    name === null ? 'Dívida removida' : `${name} (removida)`,
+                  ).map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
             </div>
           ) : null}
 

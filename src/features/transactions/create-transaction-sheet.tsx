@@ -10,6 +10,8 @@ import type { TransactionFormValues } from './transaction-form';
 import { validateForm } from './transaction-form';
 import { useCreateTransaction } from './use-transaction-mutations';
 import { useCategories } from './use-transactions';
+import { useCards } from '../cards/use-cards';
+import { useDebts } from '../debts/use-debts';
 
 /**
  * Criacao de lancamento, disponivel em qualquer tela pelo FAB.
@@ -24,6 +26,8 @@ export function CreateTransactionSheet({ month }: { month: MonthKey }) {
   const setQuickAddOpen = useUiStore((state) => state.setQuickAddOpen);
 
   const categoriesQuery = useCategories();
+  const cardsQuery = useCards();
+  const debtsQuery = useDebts();
   const createTransaction = useCreateTransaction();
 
   const handleSubmit = async (values: TransactionFormValues) => {
@@ -48,6 +52,8 @@ export function CreateTransactionSheet({ month }: { month: MonthKey }) {
         if (!open) createTransaction.reset();
       }}
       categories={categoriesQuery.data ?? []}
+      cards={cardsQuery.data ?? []}
+      debts={debtsQuery.data ?? []}
       isSaving={createTransaction.isPending}
       saveError={createTransaction.error}
       onSubmit={handleSubmit}

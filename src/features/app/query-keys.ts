@@ -36,4 +36,12 @@ export const queryKeys = {
 
   /** Categorias mudam raramente e o formulario depende delas. */
   categories: () => [...queryKeys.all, 'categories'] as const,
+
+  /**
+   * Cartoes e dividas sao dados globais, nao mensais: um cartao nao pertence a
+   * outubro. Por isso a chave nao tem mes, e alterar um deles nao invalida
+   * nenhum snapshot — nenhuma metrica do Dashboard le essas entidades.
+   */
+  cards: () => [...queryKeys.all, 'cards'] as const,
+  debts: () => [...queryKeys.all, 'debts'] as const,
 } as const;

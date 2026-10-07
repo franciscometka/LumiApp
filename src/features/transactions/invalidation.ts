@@ -44,3 +44,20 @@ export function invalidateMonths(
     () => undefined,
   );
 }
+
+/**
+ * Cartoes e dividas nao entram em nenhum total do Dashboard.
+ *
+ * Por isso alterar um deles invalida APENAS a propria lista. Nao ha mes a
+ * derrubar: a classificacao de um gasto depende do `cardId` gravado na
+ * transacao, nao da existencia do cartao, entao excluir um cartao nao muda
+ * um centavo de nenhuma metrica. Invalidar meses aqui seria recarregar a
+ * aplicacao inteira para corrigir a cor de uma etiqueta.
+ */
+export function invalidateCards(queryClient: QueryClient): Promise<void> {
+  return queryClient.invalidateQueries({ queryKey: queryKeys.cards() });
+}
+
+export function invalidateDebts(queryClient: QueryClient): Promise<void> {
+  return queryClient.invalidateQueries({ queryKey: queryKeys.debts() });
+}

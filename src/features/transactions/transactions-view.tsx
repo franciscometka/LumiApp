@@ -1,43 +1,40 @@
-"use client";
+'use client';
 
-import type { Route } from "next";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import type { Route } from 'next';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { countInGroups, groupByDay } from "@/domain/calculations/grouping";
-import type { Transaction } from "@/domain/entities/transaction";
-import { useUiStore } from "@/stores/ui-store";
-import { todayPlainDate } from "@/domain/shared/plain-date";
+import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { countInGroups, groupByDay } from '@/domain/calculations/grouping';
+import type { Transaction } from '@/domain/entities/transaction';
+import { useUiStore } from '@/stores/ui-store';
+import { todayPlainDate } from '@/domain/shared/plain-date';
 
-import { useSelectedMonth } from "../period/use-selected-month";
+import { useCards } from '../cards/use-cards';
+import { useDebts } from '../debts/use-debts';
+import { useSelectedMonth } from '../period/use-selected-month';
 
-import {
-  EmptyMonth,
-  ListError,
-  ListSkeleton,
-  NoResults,
-} from "./components/list-states";
-import { TransactionFilters } from "./components/transaction-filters";
-import { TransactionList } from "./components/transaction-list";
-import { TransactionSheet } from "./components/transaction-sheet";
-import type { ListFilters } from "./list-filters";
+import { EmptyMonth, ListError, ListSkeleton, NoResults } from './components/list-states';
+import { TransactionFilters } from './components/transaction-filters';
+import { TransactionList } from './components/transaction-list';
+import { TransactionSheet } from './components/transaction-sheet';
+import type { ListFilters } from './list-filters';
 import {
   EMPTY_FILTERS,
   applyListFilters,
   buildFilterQuery,
   filtersFromParams,
-} from "./list-filters";
-import type { TransactionFormValues } from "./transaction-form";
-import { validateForm } from "./transaction-form";
+} from './list-filters';
+import type { TransactionFormValues } from './transaction-form';
+import { validateForm } from './transaction-form';
 import {
   useDeleteTransaction,
   useRestoreTransaction,
   useSetTransactionStatus,
   useUpdateTransaction,
-} from "./use-transaction-mutations";
-import { useCategories, useTransactions } from "./use-transactions";
+} from './use-transaction-mutations';
+import { useCategories, useTransactions } from './use-transactions';
 
 /**
  * Tela de transacoes.
@@ -58,6 +55,10 @@ export function TransactionsView() {
 
   const transactionsQuery = useTransactions(month);
   const categoriesQuery = useCategories();
+  // Cartoes e dividas so alimentam os seletores de vinculo da sheet; a lista
+  // nao depende deles para renderizar.
+  const cardsQuery = useCards();
+  const debtsQuery = useDebts();
 
   const updateTransaction = useUpdateTransaction();
   const setStatus = useSetTransactionStatus();
@@ -70,9 +71,7 @@ export function TransactionsView() {
   /** Ultima excluida, para o "Desfazer". */
   const [justDeleted, setJustDeleted] = useState<Transaction | null>(null);
 
-  const filters = filtersFromParams(
-    new URLSearchParams(searchParams.toString()),
-  );
+  const filters = filtersFromParams(new URLSearchParams(searchParams.toString()));
 
   /**
    * Filtro na URL, nao em estado local: um link reproduz a tela inteira e o
@@ -82,26 +81,14 @@ export function TransactionsView() {
    * no historico, e sair da tela exigiria pressionar Voltar trinta vezes.
    */
   const applyFilters = (next: ListFilters) => {
-    const query = buildFilterQuery(
-      new URLSearchParams(searchParams.toString()),
-      next,
-    );
-    router.replace(
-      (query === "" ? pathname : `${pathname}?${query}`) as Route,
-      { scroll: false },
-    );
+    const query = buildFilterQuery(new URLSearchParams(searchParams.toString()), next);
+    router.replace((query === '' ? pathname : `${pathname}?${query}`) as Route, { scroll: false });
   };
 
   // O `?? []` precisa de memo proprio: um literal novo a cada render invalidaria
   // os memos abaixo sempre, anulando-os.
-  const categories = useMemo(
-    () => categoriesQuery.data ?? [],
-    [categoriesQuery.data],
-  );
-  const transactions = useMemo(
-    () => transactionsQuery.data ?? [],
-    [transactionsQuery.data],
-  );
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
 
   const categoriesById = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
@@ -191,22 +178,16 @@ export function TransactionsView() {
           onToggleStatus={(transaction) => {
             setStatus.mutate({
               id: transaction.id,
-              status: transaction.status === "paid" ? "pending" : "paid",
+              status: transaction.status === 'paid' ? 'pending' : 'paid',
             });
           }}
-          pendingStatusId={
-            setStatus.isPending ? (setStatus.variables?.id ?? null) : null
-          }
+          pendingStatusId={setStatus.isPending ? (setStatus.variables?.id ?? null) : null}
         />
       )}
 
       {setStatus.isError ? (
-        <p
-          role="alert"
-          className="bg-expense-surface text-expense rounded-lg px-4 py-3 text-sm"
-        >
-          Não foi possível mudar a situação desse lançamento. Ele continua como
-          estava.
+        <p role="alert" className="bg-expense-surface text-expense rounded-lg px-4 py-3 text-sm">
+          Não foi possível mudar a situação desse lançamento. Ele continua como estava.
         </p>
       ) : null}
 
@@ -245,6 +226,8 @@ export function TransactionsView() {
           }}
           transaction={editing}
           categories={categories}
+          cards={cardsQuery.data ?? []}
+          debts={debtsQuery.data ?? []}
           isSaving={updateTransaction.isPending}
           saveError={updateTransaction.error}
           onSubmit={handleSave}
@@ -262,7 +245,7 @@ export function TransactionsView() {
         title="Excluir lançamento?"
         description={
           pendingDelete === null
-            ? ""
+            ? ''
             : `"${pendingDelete.description}" sai da lista e dos totais do mês. Você poderá desfazer em seguida.`
         }
         confirmLabel="Excluir"
@@ -306,20 +289,10 @@ function UndoDeleteNotice({
         {description}
       </p>
       <div className="flex shrink-0 items-center gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onUndo}
-          disabled={isPending}
-        >
-          {isPending ? "Restaurando" : "Desfazer"}
+        <Button variant="outline" size="sm" onClick={onUndo} disabled={isPending}>
+          {isPending ? 'Restaurando' : 'Desfazer'}
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDismiss}
-          disabled={isPending}
-        >
+        <Button variant="ghost" size="sm" onClick={onDismiss} disabled={isPending}>
           OK
         </Button>
       </div>

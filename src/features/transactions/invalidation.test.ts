@@ -6,7 +6,7 @@ import type { MonthKey } from '@/domain/shared/plain-date';
 
 import { queryKeys } from '../app/query-keys';
 
-import { invalidateMonth, invalidateMonths } from './invalidation';
+import { invalidateCards, invalidateDebts, invalidateMonth, invalidateMonths } from './invalidation';
 
 /**
  * A invalidacao e o ponto onde um CRUD correto ainda consegue mostrar numero
@@ -119,5 +119,40 @@ describe('invalidateMonths', () => {
     const { client, calls } = spy();
     await invalidateMonths(client, []);
     expect(calls).toEqual([]);
+  });
+});
+
+describe('cartoes e dividas sao globais, nao mensais', () => {
+  it('alterar um cartao invalida apenas a lista de cartoes', async () => {
+    /**
+     * Nenhuma metrica do Dashboard le `card.currentInvoiceCents`, e a
+     * classificacao de um gasto depende do `cardId` gravado NA TRANSACAO, nao
+     * da existencia do cartao. Logo, mexer num cartao nao muda um centavo de
+     * nenhum total — invalidar meses aqui seria recarregar a aplicacao
+     * inteira para corrigir a cor de uma etiqueta.
+     */
+    const { client, calls } = spy();
+    await invalidateCards(client);
+
+    expect(calls).toEqual([queryKeys.cards()]);
+    expect(calls).not.toContainEqual(queryKeys.monthlySnapshot(m('2026-10')));
+    expect(calls).not.toContainEqual(queryKeys.transactionsByMonth(m('2026-10')));
+  });
+
+  it('alterar uma divida invalida apenas a lista de dividas', async () => {
+    const { client, calls } = spy();
+    await invalidateDebts(client);
+
+    expect(calls).toEqual([queryKeys.debts()]);
+  });
+
+  it('nenhuma das duas toca no diagnostico do storage nem em categorias', async () => {
+    const { client, calls } = spy();
+    await invalidateCards(client);
+    await invalidateDebts(client);
+
+    expect(calls).not.toContainEqual(queryKeys.databaseStatus());
+    expect(calls).not.toContainEqual(queryKeys.categories());
+    expect(calls).not.toContainEqual(queryKeys.all);
   });
 });
