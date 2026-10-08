@@ -348,3 +348,133 @@ describe('mes sem atividade', () => {
     expect(p.remainingToSpendCents).toBe(250000);
   });
 });
+
+describe('limite de gastos mede consumo — guardar dinheiro nao e gastar', () => {
+  /**
+   * Correcao do Lote 9. O limite usava `totals.expense`, que inclui
+   * transferencias: mandar R$ 500 para a reserva fazia o mes "estourar".
+   */
+  const LIMITE_1000 = makePlan({
+    expectedIncomeCents: 300000,
+    spendingLimitCents: 100000,
+    savingsGoalCents: 0,
+  });
+
+  const SETEMBRO = [
+    makeIncome({ amountCents: 300000, date: '2026-09-05' }),
+    makeExpense({ amountCents: 80000, date: '2026-09-12' }),
+    makeExpense({ amountCents: 9000, status: 'pending', date: '2026-09-30' }),
+    makeExpense({ amountCents: 50000, flow: 'transfer', date: '2026-09-28' }),
+  ];
+
+  it('exemplo obrigatorio: limite 1.000, gasto 890, reserva 500 -> R$ 110 disponiveis', () => {
+    const p = calculatePlanProgress(calculateTotals(SETEMBRO), LIMITE_1000);
+
+    expect(p.committedSpendingCents).toBe(89000);
+    expect(p.remainingToSpendCents).toBe(11000);
+    expect(p.isOverLimit).toBe(false);
+    expect(p.overLimitCents).toBe(0);
+    expect(p.spendingPercentage).toBe(89);
+  });
+
+  it('gasto operacional reduz "ainda posso gastar"', () => {
+    const antes = calculatePlanProgress(calculateTotals(SETEMBRO), LIMITE_1000);
+    const depois = calculatePlanProgress(
+      calculateTotals([...SETEMBRO, makeExpense({ amountCents: 4000, date: '2026-09-29' })]),
+      LIMITE_1000,
+    );
+    expect(depois.remainingToSpendCents).toBe(antes.remainingToSpendCents - 4000);
+  });
+
+  it('transferencia para a reserva NAO reduz "ainda posso gastar"', () => {
+    const antes = calculatePlanProgress(calculateTotals(SETEMBRO), LIMITE_1000);
+    const depois = calculatePlanProgress(
+      calculateTotals([
+        ...SETEMBRO,
+        makeExpense({ amountCents: 70000, flow: 'transfer', date: '2026-09-29' }),
+      ]),
+      LIMITE_1000,
+    );
+    expect(depois.remainingToSpendCents).toBe(antes.remainingToSpendCents);
+    expect(depois.committedSpendingCents).toBe(antes.committedSpendingCents);
+    expect(depois.isOverLimit).toBe(false);
+  });
+
+  it('transferencia VINDA da reserva nao aumenta a renda, paga ou pendente', () => {
+    const totais = calculateTotals([
+      ...SETEMBRO,
+      makeIncome({ amountCents: 10000, flow: 'transfer', date: '2026-09-06' }),
+      makeIncome({ amountCents: 20000, flow: 'transfer', status: 'pending', date: '2026-09-07' }),
+    ]);
+    const p = calculatePlanProgress(totais, LIMITE_1000);
+
+    expect(p.earnedIncomeCents).toBe(300000);
+    expect(p.incomePercentage).toBe(100);
+    // O caixa, sim, recebeu os R$ 300.
+    expect(totais.income).toBe(330000);
+  });
+
+  it('pago e pendente sao so a parte operacional e somam o comprometido', () => {
+    const p = calculatePlanProgress(calculateTotals(SETEMBRO), LIMITE_1000);
+
+    expect(p.paidSpendingCents).toBe(80000);
+    expect(p.pendingSpendingCents).toBe(9000);
+    expect(p.paidSpendingCents + p.pendingSpendingCents).toBe(p.committedSpendingCents);
+    expect(p.paidSpendingPercentage).toBe(80);
+  });
+
+  it('pendente -> pago e pago -> pendente nao mudam o comprometido nem o disponivel', () => {
+    const pendente = makeExpense({ amountCents: 9000, status: 'pending', date: '2026-09-30' });
+    const base = SETEMBRO.slice(0, 2);
+    const comPendente = calculatePlanProgress(
+      calculateTotals([...base, pendente, SETEMBRO[3]!]),
+      LIMITE_1000,
+    );
+    const comPago = calculatePlanProgress(
+      calculateTotals([...base, { ...pendente, status: 'paid' }, SETEMBRO[3]!]),
+      LIMITE_1000,
+    );
+
+    expect(comPago.committedSpendingCents).toBe(comPendente.committedSpendingCents);
+    expect(comPago.remainingToSpendCents).toBe(comPendente.remainingToSpendCents);
+    // Muda apenas a reparticao.
+    expect(comPago.paidSpendingCents).toBe(comPendente.paidSpendingCents + 9000);
+    expect(comPago.pendingSpendingCents).toBe(comPendente.pendingSpendingCents - 9000);
+  });
+
+  it('o saldo continua mudando com transferencias', () => {
+    const sem = calculateTotals(SETEMBRO.slice(0, 3));
+    const com = calculateTotals(SETEMBRO);
+
+    expect(com.balance).toBe(sem.balance - 50000);
+    expect(com.realizedBalance).toBe(sem.realizedBalance - 50000);
+    expect(com.expense).toBe(sem.expense + 50000);
+    // E so o orcamento de consumo que ignora a reserva.
+    expect(com.operationalExpense).toBe(sem.operationalExpense);
+  });
+
+  it('so transferencia no mes: comprometido zero e percentual 0, nunca NaN', () => {
+    const p = calculatePlanProgress(
+      calculateTotals([makeExpense({ amountCents: 50000, flow: 'transfer', date: '2026-09-28' })]),
+      LIMITE_1000,
+    );
+
+    expect(p.committedSpendingCents).toBe(0);
+    expect(p.spendingPercentage).toBe(0);
+    expect(p.paidSpendingPercentage).toBe(0);
+    expect(p.remainingToSpendCents).toBe(100000);
+    expect(p.hasActivity).toBe(true);
+  });
+
+  it('sem limite definido, os percentuais sao null — nunca NaN nem falso zero', () => {
+    const p = calculatePlanProgress(
+      calculateTotals(SETEMBRO),
+      makePlan({ spendingLimitCents: 0, expectedIncomeCents: 0, savingsGoalCents: 0 }),
+    );
+
+    for (const value of [p.spendingPercentage, p.paidSpendingPercentage, p.incomePercentage, p.savingsPercentage]) {
+      expect(value).toBeNull();
+    }
+    expect(p.isOverLimit).toBe(false);
+  });
+});

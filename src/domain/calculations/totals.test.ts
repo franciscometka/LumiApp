@@ -105,3 +105,29 @@ describe('incomeUsagePercentage', () => {
     expect(incomeUsagePercentage(totais)).toBe(150);
   });
 });
+
+describe('despesa operacional paga x pendente', () => {
+  it('decompoe operationalExpense sem incluir transferencias', () => {
+    const totais = calculateTotals([
+      makeExpense({ amountCents: 80000, status: 'paid' }),
+      makeExpense({ amountCents: 9000, status: 'pending' }),
+      makeExpense({ amountCents: 50000, status: 'paid', flow: 'transfer' }),
+      makeExpense({ amountCents: 7000, status: 'pending', flow: 'transfer' }),
+    ]);
+
+    expect(totais.paidOperationalExpense).toBe(80000);
+    expect(totais.pendingOperationalExpense).toBe(9000);
+    expect(totais.paidOperationalExpense + totais.pendingOperationalExpense).toBe(
+      totais.operationalExpense,
+    );
+    // Os totais de caixa continuam contando tudo.
+    expect(totais.paidExpense).toBe(130000);
+    expect(totais.pendingExpense).toBe(16000);
+  });
+
+  it('lista vazia devolve zeros, nunca NaN', () => {
+    const totais = calculateTotals([]);
+    expect(totais.paidOperationalExpense).toBe(0);
+    expect(totais.pendingOperationalExpense).toBe(0);
+  });
+});

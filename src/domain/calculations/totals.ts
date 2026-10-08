@@ -44,6 +44,13 @@ export interface PeriodTotals {
   readonly transferIn: Money;
   /** Saidas que consumiram patrimonio de fato. */
   readonly operationalExpense: Money;
+  /**
+   * `operationalExpense` decomposto em pago e pendente. A soma dos dois e
+   * sempre `operationalExpense`. E a base do limite de gastos do
+   * Planejamento, que mede consumo — guardar na reserva nao e consumo.
+   */
+  readonly paidOperationalExpense: Money;
+  readonly pendingOperationalExpense: Money;
   /** Saidas que apenas mudaram de lugar (guardar uma sobra, por exemplo). */
   readonly transferOut: Money;
   /** `earnedIncome - operationalExpense`. Quanto o mes de fato produziu. */
@@ -66,6 +73,8 @@ export const EMPTY_TOTALS: PeriodTotals = {
   earnedIncome: ZERO_MONEY,
   transferIn: ZERO_MONEY,
   operationalExpense: ZERO_MONEY,
+  paidOperationalExpense: ZERO_MONEY,
+  pendingOperationalExpense: ZERO_MONEY,
   transferOut: ZERO_MONEY,
   operationalBalance: ZERO_MONEY,
   transactionCount: 0,
@@ -85,7 +94,8 @@ export function calculateTotals(transactions: readonly Transaction[]): PeriodTot
 
   const earnedIncomeValues: Money[] = [];
   const transferInValues: Money[] = [];
-  const operationalExpenseValues: Money[] = [];
+  const paidOperationalExpenseValues: Money[] = [];
+  const pendingOperationalExpenseValues: Money[] = [];
   const transferOutValues: Money[] = [];
 
   let transferCount = 0;
@@ -100,9 +110,13 @@ export function calculateTotals(transactions: readonly Transaction[]): PeriodTot
       (isTransferTransaction ? transferInValues : earnedIncomeValues).push(transaction.amountCents);
     } else {
       (isPaidTransaction ? paidExpenseValues : pendingExpenseValues).push(transaction.amountCents);
-      (isTransferTransaction ? transferOutValues : operationalExpenseValues).push(
-        transaction.amountCents,
-      );
+      if (isTransferTransaction) {
+        transferOutValues.push(transaction.amountCents);
+      } else {
+        (isPaidTransaction ? paidOperationalExpenseValues : pendingOperationalExpenseValues).push(
+          transaction.amountCents,
+        );
+      }
     }
   }
 
@@ -116,7 +130,9 @@ export function calculateTotals(transactions: readonly Transaction[]): PeriodTot
 
   const earnedIncome = sumMoney(earnedIncomeValues);
   const transferIn = sumMoney(transferInValues);
-  const operationalExpense = sumMoney(operationalExpenseValues);
+  const paidOperationalExpense = sumMoney(paidOperationalExpenseValues);
+  const pendingOperationalExpense = sumMoney(pendingOperationalExpenseValues);
+  const operationalExpense = sumMoney([paidOperationalExpense, pendingOperationalExpense]);
   const transferOut = sumMoney(transferOutValues);
 
   return {
@@ -134,6 +150,8 @@ export function calculateTotals(transactions: readonly Transaction[]): PeriodTot
     earnedIncome,
     transferIn,
     operationalExpense,
+    paidOperationalExpense,
+    pendingOperationalExpense,
     transferOut,
     operationalBalance: subtractMoney(earnedIncome, operationalExpense),
 

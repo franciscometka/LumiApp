@@ -34,6 +34,12 @@ import type { PeriodTotals } from './totals';
  * reserva aumenta o caixa do mes, nao a renda gerada — e contar isso como
  * progresso de meta de renda seria premiar a pessoa por mover o proprio
  * dinheiro de lugar.
+ *
+ * **4. Guardar dinheiro nao e gastar.**
+ * O limite de gastos mede CONSUMO: usa `operationalExpense`, nao `expense`.
+ * Mandar R$ 500 para a reserva mexe no caixa e no saldo, mas nao consome o
+ * orcamento — antes da correcao do Lote 9, guardar uma sobra fazia o mes
+ * "estourar o limite". O saldo (`balance`) continua contando transferencias.
  */
 
 /** Como as tres metas se relacionam entre si. */
@@ -73,11 +79,14 @@ export interface PlanProgress {
 
   /* -------- Gastos -------- */
   readonly spendingLimitCents: Money;
-  /** Tudo que foi lancado: pago + pendente, contado uma vez so. */
+  /**
+   * Gasto OPERACIONAL lancado: pago + pendente, contado uma vez so.
+   * Transferencia para a reserva nao entra.
+   */
   readonly committedSpendingCents: Money;
-  /** So o que ja saiu da conta. */
+  /** Gasto operacional que ja saiu da conta. */
   readonly paidSpendingCents: Money;
-  /** Lancado mas ainda nao pago. */
+  /** Gasto operacional lancado mas ainda nao pago. */
   readonly pendingSpendingCents: Money;
   readonly spendingPercentage: number | null;
   /** Fracao JA PAGA do limite, para a camada solida da barra. */
@@ -173,15 +182,17 @@ export function calculatePlanProgress(
   const earnedIncomeCents = totals.earnedIncome;
 
   /**
-   * `totals.expense` ja soma pago + pendente, cada lancamento UMA vez. Toda a
-   * conta de "quanto ainda posso gastar" parte deste unico numero, entao nao
-   * existe onde duplicar: somar pendentes por fora e que criaria o problema.
+   * `totals.operationalExpense` ja soma pago + pendente, cada lancamento UMA
+   * vez, e deixa de fora as transferencias (guardar na reserva nao e gasto).
+   * Toda a conta de "quanto ainda posso gastar" parte deste unico numero,
+   * entao nao existe onde duplicar: somar pendentes por fora e que criaria o
+   * problema.
    *
    * Consequencia que vale entender: dar baixa numa conta (pendente -> pago)
    * NAO muda `remainingToSpend`. O dinheiro ja estava comprometido; mudou
    * apenas o momento em que saiu.
    */
-  const committedSpendingCents = totals.expense;
+  const committedSpendingCents = totals.operationalExpense;
   const remainingToSpendCents = subtractMoney(spendingLimitCents, committedSpendingCents);
 
   const projectedSavingsCents = totals.balance;
@@ -199,10 +210,10 @@ export function calculatePlanProgress(
 
     spendingLimitCents,
     committedSpendingCents,
-    paidSpendingCents: totals.paidExpense,
-    pendingSpendingCents: totals.pendingExpense,
+    paidSpendingCents: totals.paidOperationalExpense,
+    pendingSpendingCents: totals.pendingOperationalExpense,
     spendingPercentage: safePercentage(committedSpendingCents, spendingLimitCents),
-    paidSpendingPercentage: safePercentage(totals.paidExpense, spendingLimitCents),
+    paidSpendingPercentage: safePercentage(totals.paidOperationalExpense, spendingLimitCents),
     remainingToSpendCents,
     isOverLimit: spendingLimitCents > 0 && committedSpendingCents > spendingLimitCents,
     overLimitCents:
