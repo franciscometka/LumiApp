@@ -17,7 +17,7 @@ import { todayPlainDate } from '@/domain/shared/plain-date';
 
 import type { DataSource } from '@/data/ports/data-source';
 import { useDataSource } from '@/features/app/data-source-context';
-import { useMonthReady } from '@/features/period/use-month-ready';
+import { usePeriodsReady } from '@/features/period/use-month-ready';
 import { queryKeys } from '@/features/app/query-keys';
 
 /**
@@ -112,12 +112,23 @@ function spanningPeriod(previous: Period, current: Period): Period {
  * exibiria totais errados ate o refetch — numeros errados por pouco tempo
  * ainda sao numeros errados.
  *
- * A materializacao em si nao e responsabilidade desta feature: `useMonthReady`
- * mora no periodo e e compartilhado com Transacoes.
+ * A materializacao em si nao e responsabilidade desta feature:
+ * `usePeriodsReady` mora no periodo e e compartilhado com Transacoes e
+ * Historico.
+ *
+ * ## M-1 tambem
+ *
+ * O snapshot compara o mes com o anterior. Se setembro nunca foi visitado, as
+ * recorrencias dele nao existem, e "gastos no mês passado" sairia menor do que
+ * foi — a comparacao de outubro mentiria por falta de dado. Por isso o
+ * snapshot de M espera M-1 e M estarem preparados, pela MESMA query de
+ * preparacao que qualquer outra tela usaria para setembro:
+ *
+ *     garante setembro -> le setembro -> calcula outubro
  */
 export function useMonthlySnapshot(month: MonthKey) {
   const dataSource = useDataSource();
-  const { isReady } = useMonthReady(month);
+  const { isReady } = usePeriodsReady([civilMonthResolver.previous(month), month]);
 
   return useQuery<MonthlySnapshotData>({
     queryKey: queryKeys.monthlySnapshot(month),

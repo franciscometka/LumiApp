@@ -1,6 +1,7 @@
 export * from './by-category';
 export * from './commitments';
 export * from './filters';
+export * from './history';
 export * from './pending';
 export * from './period-comparison';
 export * from './plan-progress';

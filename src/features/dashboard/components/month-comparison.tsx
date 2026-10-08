@@ -1,3 +1,6 @@
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+
 import { MoneyText } from '@/components/finan/money-text';
 import type { PeriodComparison } from '@/domain/calculations/period-comparison';
 import { formatPercentage } from '@/domain/shared/percentage';
@@ -53,6 +56,14 @@ export function MonthComparison({ comparison }: { comparison: PeriodComparison }
                 expense.trend === 'up' ? 'a mais' : 'a menos'
               } que no mês passado.`}
       </p>
+
+      <Link
+        href="/historico"
+        className="text-primary -mx-1 mt-3 inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-sm font-medium hover:underline"
+      >
+        Ver histórico
+        <ChevronRight aria-hidden className="size-4" />
+      </Link>
     </section>
   );
 }

@@ -46,6 +46,20 @@ export const queryKeys = {
   debts: () => [...queryKeys.all, 'debts'] as const,
   recurringBills: () => [...queryKeys.all, 'recurring-bills'] as const,
 
+  /**
+   * Historico. A familia inteira cai junto quando qualquer mes muda: nao da
+   * para saber, de dentro de uma mutation, quais janelas em cache contem o
+   * mes alterado, e o custo de recalcular uma janela e baixo.
+   */
+  history: () => [...queryKeys.all, 'history'] as const,
+  /**
+   * O mes de referencia FAZ PARTE da chave. "Ultimos 6 meses" muda com o
+   * tempo: 6 meses terminando em outubro e 6 terminando em novembro sao
+   * intervalos diferentes e nao podem dividir uma entrada de cache.
+   */
+  historyWindow: (size: number, endMonth: MonthKey) =>
+    [...queryKeys.history(), size, endMonth] as const,
+
   /** Plano mensal. Um por mes, e o mes faz parte da chave. */
   monthlyPlan: (month: MonthKey) => [...queryKeys.all, 'plan', month] as const,
 

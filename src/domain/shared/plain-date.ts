@@ -330,6 +330,11 @@ const shortMonthYearFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'UTC',
 });
 
+const monthAbbrevFormatter = new Intl.DateTimeFormat('pt-BR', {
+  month: 'short',
+  timeZone: 'UTC',
+});
+
 /**
  * Converte para `Date` fixando meio-dia UTC. Uso exclusivo das funcoes de
  * formatacao abaixo, que leem a data em UTC — assim nenhum deslocamento de
@@ -362,6 +367,11 @@ export function formatMonthKey(key: MonthKey): string {
 /** "out. de 2026" */
 export function formatMonthKeyShort(key: MonthKey): string {
   return shortMonthYearFormatter.format(toUtcDate(`${key}-01`));
+}
+
+/** "out." — eixo de grafico, onde o ano ja esta no contexto. */
+export function formatMonthAbbrev(key: MonthKey): string {
+  return monthAbbrevFormatter.format(toUtcDate(`${key}-01`));
 }
 
 /**

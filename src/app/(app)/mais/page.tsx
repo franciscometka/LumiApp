@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, HandCoins, Repeat } from 'lucide-react';
+import { ChevronRight, HandCoins, History, Repeat } from 'lucide-react';
 
 import { PageShell } from '@/components/layout/page-shell';
 import { PersistenceStatusCard } from '@/features/app/persistence-status-card';
@@ -18,6 +18,12 @@ const SECTIONS = [
     href: '/recorrentes' as const,
     icon: Repeat,
   },
+  {
+    label: 'Histórico',
+    description: 'Seus meses lado a lado.',
+    href: '/historico' as const,
+    icon: History,
+  },
 ];
 
 /**
@@ -26,8 +32,7 @@ const SECTIONS = [
  * prometer o que ninguem combinou.
  */
 const UPCOMING = [
-  { label: 'Histórico', when: 'Lote 10' },
-  { label: 'Ajustes', when: 'Lote 11' },
+  { label: 'Ajustes', when: 'Lote 10' },
   { label: 'Categorias', when: 'Em breve' },
 ];
 

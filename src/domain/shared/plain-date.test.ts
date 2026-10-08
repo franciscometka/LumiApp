@@ -11,6 +11,7 @@ import {
   differenceInDays,
   differenceInMonths,
   firstDayOfMonth,
+  formatMonthAbbrev,
   formatMonthKey,
   formatPlainDate,
   formatPlainDateLong,
@@ -276,6 +277,8 @@ describe('formatacao pt-BR', () => {
     expect(formatPlainDate(toPlainDate('2026-10-05'))).toBe('05/10/2026');
     expect(formatMonthKey(toMonthKey('2026-10'))).toBe('outubro de 2026');
     expect(formatMonthKey(toMonthKey('2026-02'))).toBe('fevereiro de 2026');
+    expect(formatMonthAbbrev(toMonthKey('2026-10'))).toBe('out.');
+    expect(formatMonthAbbrev(toMonthKey('2027-01'))).toBe('jan.');
   });
 });
 

@@ -176,3 +176,22 @@ export function planMaterialization({
 
   return { month, toCreate, alreadyPresent };
 }
+
+/**
+ * Quais meses de um intervalo podem ser preparados (materializados).
+ *
+ * Regra do Historico: abrir a janela conta como visitar cada mes dela, mas
+ * SO ate o mes de referencia. Uma janela que alcance novembro estando em
+ * outubro nunca escreve em novembro — o Historico olha para tras, e criar
+ * lancamentos futuros a partir de uma tela de leitura do passado seria efeito
+ * colateral sem visita.
+ *
+ * Devolve na ordem recebida, sem repeticoes. Pura: o mes de referencia vem
+ * de fora, nunca do relogio.
+ */
+export function monthsToPrepare(
+  months: readonly MonthKey[],
+  referenceMonth: MonthKey,
+): MonthKey[] {
+  return [...new Set(months)].filter((month) => month <= referenceMonth);
+}

@@ -6,7 +6,14 @@ import type { MonthKey } from '@/domain/shared/plain-date';
 
 import { queryKeys } from '../app/query-keys';
 
-import { invalidateCards, invalidateDebts, invalidateMonth, invalidateMonths } from './invalidation';
+import {
+  invalidateCards,
+  invalidateDebts,
+  invalidateMonth,
+  invalidateMonths,
+  invalidatePlan,
+  invalidateRecurring,
+} from './invalidation';
 
 /**
  * A invalidacao e o ponto onde um CRUD correto ainda consegue mostrar numero
@@ -79,6 +86,9 @@ describe('invalidateMonth', () => {
     expect(calls).not.toContainEqual(queryKeys.transactions());
     for (const key of calls) {
       expect(key, 'toda chave precisa ser especifica').toBeDefined();
+      // A familia do Historico e a unica excecao, e e deliberada: nao ha como
+      // saber daqui quais janelas em cache contem o mes alterado.
+      if (JSON.stringify(key) === JSON.stringify(queryKeys.history())) continue;
       expect((key as unknown[]).length).toBeGreaterThan(2);
     }
   });
@@ -154,5 +164,68 @@ describe('cartoes e dividas sao globais, nao mensais', () => {
     expect(calls).not.toContainEqual(queryKeys.databaseStatus());
     expect(calls).not.toContainEqual(queryKeys.categories());
     expect(calls).not.toContainEqual(queryKeys.all);
+  });
+});
+
+describe('Historico', () => {
+  const HISTORY = queryKeys.history();
+
+  it('qualquer mutation de transacao derruba o Historico', async () => {
+    // Criar, editar, excluir, restaurar e mudar status passam todos por
+    // invalidateMonth / invalidateMonths.
+    const { client, calls } = spy();
+    await invalidateMonth(client, m('2026-07'));
+    expect(calls).toContainEqual(HISTORY);
+  });
+
+  it('edicao que troca o mes tambem derruba o Historico', async () => {
+    const { client, calls } = spy();
+    await invalidateMonths(client, [m('2026-09'), m('2026-10')]);
+    expect(calls).toContainEqual(HISTORY);
+  });
+
+  it('mudar o planejamento derruba o Historico, mas nao a lista de transacoes', async () => {
+    const { client, calls } = spy();
+    await invalidatePlan(client, m('2026-10'));
+    expect(calls).toContainEqual(HISTORY);
+    expect(calls).not.toContainEqual(queryKeys.transactionsByMonth(m('2026-10')));
+  });
+
+  it('mudar uma recorrencia derruba o Historico e a materializacao', async () => {
+    const { client, calls } = spy();
+    await invalidateRecurring(client);
+    expect(calls).toContainEqual(HISTORY);
+    expect(calls).toContainEqual(queryKeys.materialization());
+  });
+
+  it('cartoes e dividas nao tocam no Historico', async () => {
+    const { client, calls } = spy();
+    await invalidateCards(client);
+    await invalidateDebts(client);
+    expect(calls).not.toContainEqual(HISTORY);
+  });
+
+  it('a familia cobre todas as janelas em cache', () => {
+    const prefix = JSON.stringify(HISTORY).slice(0, -1);
+    expect(JSON.stringify(queryKeys.historyWindow(6, m('2026-10'))).startsWith(prefix)).toBe(true);
+    expect(JSON.stringify(queryKeys.historyWindow(12, m('2027-03'))).startsWith(prefix)).toBe(true);
+  });
+});
+
+describe('chave da janela do Historico', () => {
+  it('6 meses de outubro nao e o mesmo cache que 6 meses de novembro', () => {
+    expect(queryKeys.historyWindow(6, m('2026-10'))).not.toEqual(
+      queryKeys.historyWindow(6, m('2026-11')),
+    );
+  });
+
+  it('6 e 12 meses terminando no mesmo mes sao caches diferentes', () => {
+    expect(queryKeys.historyWindow(6, m('2026-10'))).not.toEqual(
+      queryKeys.historyWindow(12, m('2026-10')),
+    );
+  });
+
+  it('tem o formato combinado: finan / history / tamanho / mes de referencia', () => {
+    expect(queryKeys.historyWindow(6, m('2026-10'))).toEqual(['finan', 'history', 6, '2026-10']);
   });
 });

@@ -19,6 +19,12 @@ import { queryKeys } from '../app/query-keys';
  * anterior. Logo, mexer em setembro muda o snapshot de setembro e tambem o de
  * outubro. Invalidar apenas o mes editado deixaria a comparacao de outubro
  * exibindo um numero obsoleto — sem erro na tela, so um dado errado.
+ *
+ * O Historico tambem cai: qualquer janela que contenha o mes ficou velha, e a
+ * familia inteira e derrubada porque nao ha como saber daqui quais janelas em
+ * cache contem este mes. Este e o caminho de toda mutation de transacao
+ * (criar, editar, excluir, restaurar, mudar status) e da materializacao que
+ * criou ocorrencias.
  */
 export function invalidateMonth(queryClient: QueryClient, month: MonthKey): Promise<void> {
   const next = civilMonthResolver.next(month);
@@ -28,6 +34,7 @@ export function invalidateMonth(queryClient: QueryClient, month: MonthKey): Prom
     queryClient.invalidateQueries({ queryKey: queryKeys.monthlySnapshot(month) }),
     // O mes seguinte compara-se com este.
     queryClient.invalidateQueries({ queryKey: queryKeys.monthlySnapshot(next) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.history() }),
   ]).then(() => undefined);
 }
 
@@ -84,6 +91,7 @@ export function invalidateRecurring(queryClient: QueryClient): Promise<void> {
     queryClient.invalidateQueries({ queryKey: queryKeys.materialization() }),
     queryClient.invalidateQueries({ queryKey: queryKeys.transactions() }),
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboard() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.history() }),
   ]).then(() => undefined);
 }
 
@@ -97,10 +105,13 @@ export function invalidateRecurring(queryClient: QueryClient): Promise<void> {
  *
  * Tambem nao cai o snapshot do mes seguinte: diferente de uma transacao, um
  * plano de outubro nao participa de nenhuma comparacao de novembro.
+ *
+ * O Historico cai porque mostra a situacao do plano em cada mes.
  */
 export function invalidatePlan(queryClient: QueryClient, month: MonthKey): Promise<void> {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.monthlyPlan(month) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.monthlySnapshot(month) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.history() }),
   ]).then(() => undefined);
 }

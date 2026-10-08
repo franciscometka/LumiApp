@@ -53,6 +53,10 @@ A regra que sustenta o resto: **nenhuma conta de dinheiro acontece em JSX.** Tod
 
 **Histórico não muda sozinho.** Alterar uma recorrência vale para meses ainda não lançados; o que já foi gerado é registro. Exclusão é lógica e nunca em cascata.
 
+**Preparar um mês escreve; ler um mês só lê.** Visitar um mês materializa as recorrências dele antes de qualquer número aparecer, por uma única query de preparação por mês (`materialization(mês)`), compartilhada entre telas. O Dashboard de M prepara também M−1, porque compara com ele; o Histórico prepara a janela inteira, nunca além do mês atual. As queries que exibem dados não escrevem.
+
+**Garantia entre abas é do id, não de lock.** O `localStorage` não tem transação entre abas. O que impede duplicata é o id determinístico; a garantia forte entre clientes chega com o Supabase (`PRIMARY KEY` + `ON CONFLICT DO NOTHING`).
+
 ## Estado
 
-Lotes 0 a 7 concluídos: fundação, domínio, persistência, casca, Dashboard, Transações, Cartões e Dívidas, Contas recorrentes. Planejamento, Histórico e Ajustes em aberto.
+Lotes 0 a 9 concluídos: fundação, domínio, persistência, casca, Dashboard, Transações, Cartões e Dívidas, Contas recorrentes, Planejamento e Histórico. Próximo: Lote 10 — Ajustes e polimento.
