@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
+import { BRAND_DESCRIPTION, BRAND_NAME } from '@/components/brand/brand';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 
 import './globals.css';
@@ -13,9 +14,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Finan',
-  description: 'Controle das suas finanças do mês, sem planilha.',
-  applicationName: 'Finan',
+  title: { default: BRAND_NAME, template: `%s · ${BRAND_NAME}` },
+  description: BRAND_DESCRIPTION,
+  applicationName: BRAND_NAME,
+  // Favicon, icon.svg, apple-icon.png e o manifest vem das convencoes de
+  // arquivo de src/app/ (gerados por scripts/brand/).
+  appleWebApp: { capable: true, title: BRAND_NAME },
 };
 
 export const viewport: Viewport = {

@@ -14,11 +14,11 @@ export function parseSalaryDay(raw: string): number | null {
 }
 
 /**
- * Nome do arquivo de backup: \`finan-backup-2026-10-08.json\`.
+ * Nome do arquivo de backup: \`lumi-backup-2026-10-08.json\`.
  * A data no nome e o que distingue dois backups na pasta de downloads.
  */
 export function backupFileName(today: PlainDate): string {
-  return `finan-backup-${today}.json`;
+  return `lumi-backup-${today}.json`;
 }
 
 function plural(count: number, singular: string, pluralForm: string): string {

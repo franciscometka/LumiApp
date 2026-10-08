@@ -4,6 +4,8 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { BRAND_NAME } from '@/components/brand/brand';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { useUiStore } from '@/stores/ui-store';
@@ -24,11 +26,8 @@ export function DesktopSidebar() {
 
   return (
     <aside className="bg-background hidden w-60 shrink-0 flex-col border-r lg:flex">
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-lg text-[15px] font-semibold">
-          F
-        </div>
-        <span className="text-[15px] font-semibold tracking-tight">Finan</span>
+      <div className="flex items-center px-5 py-5">
+        <BrandLogo height={30} className="text-foreground" />
       </div>
 
       <div className="px-3 pb-3">
@@ -63,7 +62,7 @@ export function DesktopSidebar() {
       </nav>
 
       <div className="flex items-center justify-between px-3 py-4">
-        <span className="text-muted-foreground px-2 text-xs">Finan</span>
+        <span className="text-muted-foreground px-2 text-xs">{BRAND_NAME}</span>
         <ThemeToggle />
       </div>
     </aside>

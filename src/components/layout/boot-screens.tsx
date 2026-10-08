@@ -2,6 +2,8 @@
 
 import { RotateCcw, TriangleAlert } from 'lucide-react';
 
+import { BRAND_NAME } from '@/components/brand/brand';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { Button } from '@/components/ui/button';
 import type { DataError } from '@/data/ports/errors';
 import { retryInitialization } from '@/features/app/data-source-store';
@@ -17,12 +19,7 @@ import { retryInitialization } from '@/features/app/data-source-store';
 export function AppBootScreen() {
   return (
     <div className="flex min-h-dvh items-center justify-center p-6" role="status" aria-live="polite">
-      <div className="flex items-center gap-2.5 opacity-60">
-        <div className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-lg text-[15px] font-semibold">
-          F
-        </div>
-        <span className="text-[15px] font-semibold tracking-tight">Finan</span>
-      </div>
+      <BrandLogo height={36} className="text-foreground opacity-60" />
       <span className="sr-only">Carregando seus dados</span>
     </div>
   );
@@ -36,7 +33,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   corrupted_json: 'Os dados salvos não puderam ser lidos.',
   corrupted_structure: 'Os dados salvos não estão no formato esperado.',
   unsupported_schema_version:
-    'Estes dados foram criados por uma versão mais nova do Finan. Atualize o aplicativo para abri-los.',
+    `Estes dados foram criados por uma versão mais nova do ${BRAND_NAME}. Atualize o aplicativo para abri-los.`,
   migration_failed: 'Não foi possível atualizar o formato dos dados salvos.',
 };
 

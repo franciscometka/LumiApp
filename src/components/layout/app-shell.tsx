@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { BRAND_NAME } from '@/components/brand/brand';
+import { BrandMark } from '@/components/brand/brand-mark';
 import { MonthSwitcher } from '@/components/finan/month-switcher';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { DataSourceProvider } from '@/features/app/data-source-context';
@@ -90,10 +92,8 @@ function AppHeader() {
       )}
     >
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-2 px-4 lg:h-16 lg:px-8">
-        <div className="flex items-center gap-2.5 lg:hidden">
-          <div className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-[13px] font-semibold">
-            F
-          </div>
+        <div className="flex items-center lg:hidden">
+          <BrandMark size={28} title={BRAND_NAME} className="text-foreground" />
         </div>
 
         {withMonth ? <MonthSwitcher className="lg:-ml-2" /> : null}

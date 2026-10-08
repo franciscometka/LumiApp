@@ -26,7 +26,11 @@ import type { ID } from './id';
  * ameaca de "qual id tem a conta de internet de outubro".
  */
 
-/** Namespace proprio do Finan, gerado uma vez e fixo para sempre. */
+/**
+ * Namespace proprio do app, gerado uma vez e fixo para sempre. O nome
+ * `FINAN_` e legado estavel do nome antigo do projeto (ver
+ * components/brand/brand.ts): mudar o valor mudaria todos os ids.
+ */
 export const FINAN_NAMESPACE = '6f9b1e54-0c7d-4f3a-9a2b-8d5e1c0a7b43';
 
 function rotateLeft(value: number, shift: number): number {

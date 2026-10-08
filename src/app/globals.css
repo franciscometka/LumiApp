@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================================
-   Finan — Design Tokens
+   Lumi — Design Tokens
    ----------------------------------------------------------------------------
    Regras da paleta:
    - Neutros frios (hue ~286) como base. Nada de cinza puro: dá frieza de ERP.

@@ -10,6 +10,7 @@
 import type { MonthKey } from '@/domain/shared/plain-date';
 
 export const queryKeys = {
+  /** Raiz legada do nome antigo do projeto; estavel, nunca exibida. */
   all: ['finan'] as const,
 
   database: () => [...queryKeys.all, 'database'] as const,

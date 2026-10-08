@@ -127,7 +127,7 @@ export class LocalDatabase {
     if (version > this.targetVersion) {
       throw new DataError(
         'unsupported_schema_version',
-        `Estes dados foram gravados por uma versão mais nova do Finan (schema ${version}, suportado até ${this.targetVersion}). Atualize o aplicativo para abri-los.`,
+        `Estes dados foram gravados por uma versão mais nova do Lumi (schema ${version}, suportado até ${this.targetVersion}). Atualize o aplicativo para abri-los.`,
         { rawSnapshot: raw },
       );
     }
@@ -367,7 +367,7 @@ export class LocalDatabase {
     if (version > this.targetVersion) {
       throw new DataError(
         'unsupported_schema_version',
-        `O arquivo foi gerado por uma versão mais nova do Finan (schema ${version}).`,
+        `O arquivo foi gerado por uma versão mais nova do Lumi (schema ${version}).`,
       );
     }
 
@@ -447,7 +447,7 @@ export class LocalDatabase {
         cause.code,
         cause.code === 'corrupted_json'
           ? 'O arquivo não é um JSON válido. Nada foi importado.'
-          : 'O arquivo não tem o formato de um backup do Finan. Nada foi importado.',
+          : 'O arquivo não tem o formato de um backup do Lumi. Nada foi importado.',
         { cause },
       );
     }

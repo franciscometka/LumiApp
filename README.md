@@ -1,4 +1,11 @@
-# Finan
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/lumi-logo-horizontal-dark.svg">
+    <img src="public/brand/lumi-logo-horizontal-light.svg" alt="Lumi" height="56">
+  </picture>
+</p>
+
+# Lumi — Finanças com mais clareza
 
 [![CI](https://github.com/franciscometka/financeapp/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/franciscometka/financeapp/actions/workflows/ci.yml)
 
@@ -39,7 +46,7 @@ Os quatro últimos são os portões de cada entrega, e o [CI](.github/workflows/
 
 Para levar os dados, guardar uma cópia ou restaurar: **Mais → Ajustes → Dados**.
 
-- **Exportar backup** baixa um `finan-backup-AAAA-MM-DD.json` no formato oficial do banco.
+- **Exportar backup** baixa um `lumi-backup-AAAA-MM-DD.json` no formato oficial do banco.
 - **Importar backup** valida o arquivo inteiro, mostra o que ele contém e só substitui os dados depois da sua confirmação. Arquivo inválido não grava nada; os dados atuais ficam intactos.
 - **Apagar dados** remove transações, planos, cartões, dívidas e recorrências. Categorias e preferências ficam, e os dados de demonstração não voltam.
 
@@ -57,7 +64,7 @@ A regra que sustenta o resto: **nenhuma conta de dinheiro acontece em JSX.** Tod
 
 ## As duas contas do app
 
-O Finan mantém duas identidades, de propósito, e cada tela usa os nomes da sua:
+O Lumi mantém duas identidades, de propósito, e cada tela usa os nomes da sua:
 
 | | Fórmula | Transferências | Onde |
 |---|---|---|---|
@@ -85,6 +92,20 @@ Mover dinheiro próprio — usar a reserva, guardar uma sobra — muda o caixa e
 **Preparar um mês escreve; ler um mês só lê.** Visitar um mês materializa as recorrências dele antes de qualquer número aparecer, por uma única query de preparação por mês, compartilhada entre telas. O Início de M prepara também M−1, porque compara com ele; o Histórico prepara a janela inteira, nunca além do mês atual.
 
 **Garantia entre abas é do id, não de lock.** O `localStorage` não tem transação entre abas. O que impede duplicata é o id determinístico; a garantia forte entre clientes chega com o Supabase (`PRIMARY KEY` + `ON CONFLICT DO NOTHING`).
+
+## Marca
+
+Símbolo, logo e ícones vivem em `public/brand/`, rastreados da referência aprovada em `docs/brand/reference/`. Nada é desenhado à mão: os scripts geram tudo, em Node puro, sem dependência nova.
+
+```bash
+node scripts/brand/trace-reference.mjs   # só se a referência mudar
+node scripts/brand/build-assets.mjs      # SVGs, prévia e src/components/brand/brand-geometry.ts
+node scripts/brand/render-icons.mjs      # PNGs do PWA, apple-icon e favicon.ico
+```
+
+No app, use `BrandMark` e `BrandLogo` (`src/components/brand/`). Eles são inline e em `currentColor`, então seguem o tema escolhido no app, nunca o do sistema. A prévia da identidade está em `docs/brand/preview.html`.
+
+**Identificadores legados.** O projeto se chamava Finan. Três identificadores internos mantêm o nome antigo de propósito, porque mudá-los perderia dados ou cache: a chave `finan:db` do `localStorage`, o namespace UUID v5 (`FINAN_NAMESPACE`) e a raiz `['finan']` das query keys. Eles nunca aparecem para o usuário. Não migre.
 
 ## Estado
 

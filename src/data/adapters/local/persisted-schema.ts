@@ -16,6 +16,10 @@ import { timestampSchema } from '@/domain/shared/schemas';
  * colecao) tornaria cada migracao nao-atomica: um crash no meio deixaria
  * metade dos dados numa versao e metade em outra, sem forma de saber qual.
  */
+/**
+ * `finan` e legado estavel do nome antigo do projeto (ver
+ * components/brand/brand.ts). Mudar a chave abandonaria os dados ja salvos.
+ */
 export const STORAGE_KEY = 'finan:db';
 
 /** Versao inicial do formato. Incrementa a cada mudanca incompativel. */

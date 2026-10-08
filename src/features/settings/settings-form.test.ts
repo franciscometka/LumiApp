@@ -20,7 +20,7 @@ describe('parseSalaryDay', () => {
 
 describe('backupFileName', () => {
   it('leva a data no nome', () => {
-    expect(backupFileName(toPlainDate('2026-10-08'))).toBe('finan-backup-2026-10-08.json');
+    expect(backupFileName(toPlainDate('2026-10-08'))).toBe('lumi-backup-2026-10-08.json');
   });
 });
 
