@@ -44,4 +44,18 @@ export const queryKeys = {
    */
   cards: () => [...queryKeys.all, 'cards'] as const,
   debts: () => [...queryKeys.all, 'debts'] as const,
+  recurringBills: () => [...queryKeys.all, 'recurring-bills'] as const,
+
+  /**
+   * Materializacao das contas recorrentes de um mes.
+   *
+   * E uma chave de ESCRITA disfarcada de leitura, e e justamente por isso que
+   * ela existe: duas telas que pedem o mesmo mes compartilham a mesma entrada
+   * de cache, entao a materializacao roda uma vez so. A deduplicacao do
+   * TanStack Query e a coordenacao (ver `useMonthReady`).
+   */
+  materialization: (month?: MonthKey) =>
+    month === undefined
+      ? ([...queryKeys.all, 'materialization'] as const)
+      : ([...queryKeys.all, 'materialization', month] as const),
 } as const;

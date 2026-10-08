@@ -61,3 +61,28 @@ export function invalidateCards(queryClient: QueryClient): Promise<void> {
 export function invalidateDebts(queryClient: QueryClient): Promise<void> {
   return queryClient.invalidateQueries({ queryKey: queryKeys.debts() });
 }
+
+/**
+ * Recorrencias sao diferentes de cartoes e dividas.
+ *
+ * Um cartao nunca muda um total: a classificacao do gasto vem do `cardId`
+ * gravado na transacao. Uma recorrencia, nao — ela e um MOLDE que cria
+ * transacoes. Criar "Netflix R$ 55" com inicio neste mes deve fazer a
+ * ocorrencia aparecer, e isso muda o Dashboard.
+ *
+ * Por isso aqui a invalidacao alcanca as familias financeiras inteiras, e nao
+ * um mes especifico: nao da para saber de antemao quais meses em cache a nova
+ * recorrencia atinge. Reexecutar a materializacao de um mes ja materializado e
+ * inofensivo — o id determinstico garante que nada seja recriado.
+ *
+ * Continua longe de `invalidateQueries()` sem argumento: diagnostico do
+ * storage, categorias, cartoes e dividas nao sao tocados.
+ */
+export function invalidateRecurring(queryClient: QueryClient): Promise<void> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.recurringBills() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.materialization() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.transactions() }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard() }),
+  ]).then(() => undefined);
+}

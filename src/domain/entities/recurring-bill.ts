@@ -16,9 +16,9 @@ import { PAYMENT_METHODS, TRANSACTION_TYPES } from './transaction';
  * Modelo de um lancamento que se repete todo periodo (internet, academia,
  * parcela de emprestimo, assinaturas).
  *
- * `lastGeneratedMonth` e a guarda de idempotencia: a materializacao so cria
- * transacoes para periodos posteriores a ele. Sem isso, cada abertura do app
- * duplicaria as contas do mes.
+ * A idempotencia da materializacao NAO mora aqui: ela vem do id determinstico
+ * da ocorrencia, em `calculations/materialization`. Ver a nota em
+ * `lastGeneratedMonth` sobre por que aquele campo nao serve para isso.
  */
 export const recurringBillSchema = z.object({
   id: idSchema,
@@ -37,7 +37,17 @@ export const recurringBillSchema = z.object({
   startMonth: monthKeySchema,
   /** Ultimo mes em que a conta vale. Ausente = sem data de termino. */
   endMonth: monthKeySchema.optional(),
-  /** Ultimo mes ja materializado. Ausente = nunca gerou nada. */
+  /**
+   * LEGADO — nao use para decidir materializacao.
+   *
+   * Registra o maior mes ja gerado, nao o CONJUNTO dos gerados. Como os meses
+   * sao visitados fora de ordem (ver `calculations/materialization`), a regra
+   * `month > lastGeneratedMonth` pula meses indevidamente: visitar novembro e
+   * depois setembro deixaria setembro sem suas contas para sempre.
+   *
+   * O campo continua aqui porque remove-lo exigiria migracao, e o schema nao
+   * muda neste lote. A idempotencia vem do id determinstico da ocorrencia.
+   */
   lastGeneratedMonth: monthKeySchema.optional(),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
@@ -51,15 +61,6 @@ export function isActiveInMonth(bill: RecurringBill, month: MonthKey): boolean {
   if (!bill.isActive || bill.deletedAt !== undefined) return false;
   if (month < bill.startMonth) return false;
   return bill.endMonth === undefined || month <= bill.endMonth;
-}
-
-/**
- * Se a conta ainda precisa ser materializada naquele mes.
- * Esta e a condicao que torna a geracao idempotente.
- */
-export function needsGeneration(bill: RecurringBill, month: MonthKey): boolean {
-  if (!isActiveInMonth(bill, month)) return false;
-  return bill.lastGeneratedMonth === undefined || month > bill.lastGeneratedMonth;
 }
 
 /**

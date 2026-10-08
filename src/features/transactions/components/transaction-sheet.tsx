@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Loader2, Trash2 } from 'lucide-react';
+import { ChevronDown, Loader2, Repeat, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
 import type { Card } from '@/domain/entities/card';
 import type { Category } from '@/domain/entities/category';
 import type { Debt } from '@/domain/entities/debt';
+import type { RecurringBill } from '@/domain/entities/recurring-bill';
 import type { Transaction, TransactionType } from '@/domain/entities/transaction';
 import type { FLOW_NATURES } from '@/domain/entities/transaction';
 import {
@@ -68,6 +69,8 @@ export interface TransactionSheetProps {
   /** Inclui excluidos: um vinculo historico precisa continuar resolvivel. */
   readonly cards: readonly Card[];
   readonly debts: readonly Debt[];
+  /** Para resolver o nome da recorrencia que gerou este lancamento. */
+  readonly recurringBills: readonly RecurringBill[];
   readonly isSaving: boolean;
   readonly saveError: Error | null;
   /** Deve resolver apenas DEPOIS da persistencia confirmar. */
@@ -84,6 +87,7 @@ export function TransactionSheet({
   categories,
   cards,
   debts,
+  recurringBills,
   isSaving,
   saveError,
   onSubmit,
@@ -108,6 +112,17 @@ export function TransactionSheet({
   );
 
   const available = categoriesForType(categories, values.type);
+
+  /**
+   * Nome da recorrencia de origem. `null` quando o lancamento e avulso.
+   * Procura entre TODAS, inclusive excluidas: um vinculo historico continua
+   * merecendo um nome em vez de um id orfao.
+   */
+  const origin =
+    transaction?.recurringBillId === undefined
+      ? null
+      : (recurringBills.find((bill) => bill.id === transaction.recurringBillId)?.description ??
+        'Recorrência removida');
 
   const update = <K extends keyof TransactionFormValues>(
     key: K,
@@ -147,6 +162,24 @@ export function TransactionSheet({
               : 'Valor, descrição e categoria já bastam.'}
           </SheetDescription>
         </SheetHeader>
+
+        {/*
+          Origem recorrente.
+          
+          Fica visivel no topo porque muda o entendimento do que se esta
+          editando: alterar o valor aqui NAO altera a recorrencia, e a pessoa
+          precisa saber disso antes de digitar. Uma ocorrencia materializada e
+          independente depois de criada.
+        */}
+        {origin === null ? null : (
+          <p className="text-muted-foreground bg-muted/50 mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-xs">
+            <Repeat aria-hidden className="size-3.5 shrink-0" />
+            <span>
+              Gerado por <span className="text-foreground font-medium">{origin}</span> · alterar
+              aqui não muda a recorrência
+            </span>
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4" noValidate>
           <TypeToggle

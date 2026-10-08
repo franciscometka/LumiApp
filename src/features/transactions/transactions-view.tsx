@@ -13,6 +13,9 @@ import { todayPlainDate } from '@/domain/shared/plain-date';
 
 import { useCards } from '../cards/use-cards';
 import { useDebts } from '../debts/use-debts';
+import { useRecurringBills } from '../recurring/use-recurring-bills';
+import { MaterializationNotice } from '../period/materialization-notice';
+import { useMonthReady } from '../period/use-month-ready';
 import { useSelectedMonth } from '../period/use-selected-month';
 
 import { EmptyMonth, ListError, ListSkeleton, NoResults } from './components/list-states';
@@ -45,7 +48,9 @@ import { useCategories, useTransactions } from './use-transactions';
  * aparece, em que ordem, e qual mutation cada gesto dispara.
  */
 export function TransactionsView() {
-  const { month, label: monthLabel } = useSelectedMonth();
+  const { month, label: monthLabel, isCurrent } = useSelectedMonth();
+  // Mesma garantia que a Dashboard observa; roda uma vez so para o mes.
+  const { justCreated } = useMonthReady(month);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -59,6 +64,7 @@ export function TransactionsView() {
   // nao depende deles para renderizar.
   const cardsQuery = useCards();
   const debtsQuery = useDebts();
+  const recurringQuery = useRecurringBills();
 
   const updateTransaction = useUpdateTransaction();
   const setStatus = useSetTransactionStatus();
@@ -151,6 +157,8 @@ export function TransactionsView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <MaterializationNotice result={justCreated} month={month} isCurrentMonth={isCurrent} />
+
       {/* Sem transacao nenhuma no mes, filtrar o vazio nao faz sentido. */}
       {monthIsEmpty ? null : (
         <TransactionFilters
@@ -228,6 +236,7 @@ export function TransactionsView() {
           categories={categories}
           cards={cardsQuery.data ?? []}
           debts={debtsQuery.data ?? []}
+          recurringBills={recurringQuery.data ?? []}
           isSaving={updateTransaction.isPending}
           saveError={updateTransaction.error}
           onSubmit={handleSave}

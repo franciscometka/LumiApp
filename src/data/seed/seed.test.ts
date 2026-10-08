@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { calculateCommitments } from '@/domain/calculations/commitments';
+import { occurrenceId, planMaterialization } from '@/domain/calculations/materialization';
 import { calculateTotals } from '@/domain/calculations/totals';
 import * as debtRules from '@/domain/entities/debt';
 import { formatMoney } from '@/domain/shared/money';
@@ -83,10 +84,40 @@ describe('buildSeedData', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('marca as recorrentes como ja geradas no mes do seed', () => {
-    // Sem isso, a primeira materializacao criaria uma segunda conta de
-    // internet por cima da que o seed acabou de inserir.
-    expect(dados.recurringBills.every((bill) => bill.lastGeneratedMonth === MES)).toBe(true);
+  it('as ocorrencias do seed tem identidade de ocorrencia', () => {
+    /**
+     * As transacoes de Internet e Emprestimo do seed SAO a materializacao das
+     * recorrencias naquele mes, entao precisam carregar o id determinstico.
+     *
+     * Com um id arbitrario elas seriam invisiveis para o materializador, que
+     * criaria uma segunda Internet de R$ 120 e um segundo Emprestimo de
+     * R$ 440 — R$ 560 duplicados no Dashboard, sem nenhum sintoma alem do
+     * numero errado.
+     */
+    for (const bill of dados.recurringBills) {
+      const esperado = occurrenceId(bill.id, MES);
+      const ocorrencia = dados.transactions.find((item) => item.recurringBillId === bill.id);
+
+      expect(ocorrencia, `recorrencia ${bill.description} sem ocorrencia`).toBeDefined();
+      expect(ocorrencia?.id, `ocorrencia de ${bill.description}`).toBe(esperado);
+    }
+  });
+
+  it('abrir o mes do seed nao cria nenhuma duplicata', () => {
+    // A verificacao de ponta a ponta: o plano sobre os dados do seed e vazio.
+    const plan = planMaterialization({
+      bills: dados.recurringBills,
+      existing: dados.transactions,
+      month: MES,
+    });
+
+    expect(plan.toCreate).toEqual([]);
+    expect(plan.alreadyPresent).toHaveLength(dados.recurringBills.length);
+  });
+
+  it('nao depende de lastGeneratedMonth para isso', () => {
+    // O campo saiu do materializador; o seed nao o usa mais como guarda.
+    expect(dados.recurringBills.every((bill) => bill.lastGeneratedMonth === undefined)).toBe(true);
   });
 
   it('limita os dias ao ultimo dia do mes', () => {

@@ -11,7 +11,6 @@ import { monthlyPlanSchema } from './monthly-plan';
 import {
   dueDateInMonth,
   isActiveInMonth,
-  needsGeneration,
   recurringBillSchema,
 } from './recurring-bill';
 import {
@@ -274,19 +273,20 @@ describe('RecurringBill', () => {
     expect(isActiveInMonth(comFim, month('2026-07'))).toBe(false);
   });
 
-  it('e idempotente: nao regenera um mes ja materializado', () => {
-    // Esta e a guarda que impede duplicar as contas a cada abertura do app.
-    expect(needsGeneration(base, month('2026-10'))).toBe(true);
+  it('a vigencia nao depende de lastGeneratedMonth', () => {
+    /**
+     * `lastGeneratedMonth` era usado como guarda de idempotencia, com a regra
+     * `month > lastGeneratedMonth`. Isso pulava meses visitados fora de ordem:
+     * depois de abrir novembro, setembro nunca mais ganharia suas contas.
+     *
+     * A idempotencia passou para o id determinstico da ocorrencia, e a
+     * vigencia virou uma pergunta puramente civil — que nao olha para o campo.
+     */
+    const comMarcador = { ...base, lastGeneratedMonth: month('2026-11') };
 
-    const jaGerada = { ...base, lastGeneratedMonth: month('2026-10') };
-    expect(needsGeneration(jaGerada, month('2026-10'))).toBe(false);
-    expect(needsGeneration(jaGerada, month('2026-11'))).toBe(true);
-    expect(needsGeneration(jaGerada, month('2026-09'))).toBe(false);
-  });
-
-  it('nao gera nada fora da vigencia, mesmo sem marcador', () => {
-    expect(needsGeneration({ ...base, isActive: false }, month('2026-10'))).toBe(false);
-    expect(needsGeneration(base, month('2025-11'))).toBe(false);
+    expect(isActiveInMonth(comMarcador, month('2026-09'))).toBe(true);
+    expect(isActiveInMonth(comMarcador, month('2026-10'))).toBe(true);
+    expect(isActiveInMonth(comMarcador, month('2026-12'))).toBe(true);
   });
 });
 

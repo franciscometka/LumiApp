@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, HandCoins } from 'lucide-react';
+import { ChevronRight, HandCoins, Repeat } from 'lucide-react';
 
 import { PageShell } from '@/components/layout/page-shell';
 import { PersistenceStatusCard } from '@/features/app/persistence-status-card';
@@ -12,6 +12,12 @@ const SECTIONS = [
     href: '/dividas' as const,
     icon: HandCoins,
   },
+  {
+    label: 'Contas recorrentes',
+    description: 'O que se repete todo mês.',
+    href: '/recorrentes' as const,
+    icon: Repeat,
+  },
 ];
 
 /**
@@ -20,7 +26,6 @@ const SECTIONS = [
  * prometer o que ninguem combinou.
  */
 const UPCOMING = [
-  { label: 'Contas recorrentes', when: 'Lote 7' },
   { label: 'Histórico', when: 'Lote 10' },
   { label: 'Ajustes', when: 'Lote 11' },
   { label: 'Categorias', when: 'Em breve' },

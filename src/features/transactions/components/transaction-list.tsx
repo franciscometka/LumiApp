@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Clock, Repeat } from 'lucide-react';
 
 import { MoneyText } from '@/components/finan/money-text';
 import type { DayGroup } from '@/domain/calculations/grouping';
@@ -119,8 +119,16 @@ function TransactionRow({
           <span className="block truncate text-[15px] font-medium">
             {transaction.description}
           </span>
-          <span className="text-muted-foreground mt-0.5 block truncate text-[13px]">
-            {categoryName ?? 'Sem categoria'}
+          <span className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate text-[13px]">
+            {/*
+              Marca de origem recorrente. Um icone de 12px, nao um selo: a
+              informacao importa quando a pessoa se pergunta "de onde veio
+              isso?", e nao merece competir com a descricao.
+            */}
+            {transaction.recurringBillId === undefined ? null : (
+              <Repeat aria-label="Lançamento recorrente" className="size-3 shrink-0" />
+            )}
+            <span className="truncate">{categoryName ?? 'Sem categoria'}</span>
           </span>
         </span>
 

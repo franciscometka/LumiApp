@@ -1,5 +1,7 @@
 'use client';
 
+import { MaterializationNotice } from '@/features/period/materialization-notice';
+import { useMonthReady } from '@/features/period/use-month-ready';
 import { useSelectedMonth } from '@/features/period/use-selected-month';
 
 import { BalanceHero } from './components/balance-hero';
@@ -32,7 +34,9 @@ import { useMonthlySnapshot } from './use-monthly-snapshot';
  * O que nao cabe nessa lista nao entra na tela inicial.
  */
 export function DashboardView() {
-  const { month, label } = useSelectedMonth();
+  const { month, label, isCurrent } = useSelectedMonth();
+  // A mesma garantia que Transacoes observa: uma execucao, duas telas.
+  const { justCreated } = useMonthReady(month);
   const { data, isPending, isError, refetch } = useMonthlySnapshot(month);
 
   if (isPending) return <DashboardSkeleton />;
@@ -46,6 +50,8 @@ export function DashboardView() {
 
   return (
     <div className="grid gap-4">
+      <MaterializationNotice result={justCreated} month={month} isCurrentMonth={isCurrent} />
+
       <BalanceHero snapshot={snapshot} />
 
       <StatCards snapshot={snapshot} />

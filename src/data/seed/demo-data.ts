@@ -1,3 +1,4 @@
+import { occurrenceId } from '@/domain/calculations/materialization';
 import type { Card } from '@/domain/entities/card';
 import type { Category } from '@/domain/entities/category';
 import type { Debt } from '@/domain/entities/debt';
@@ -209,10 +210,6 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
       paymentMethod: 'boleto',
       isActive: true,
       startMonth: month,
-      // Ja marcado como gerado neste mes: as transacoes do seed sao
-      // justamente a materializacao dele. Sem isso, a primeira abertura
-      // criaria uma segunda conta de internet.
-      lastGeneratedMonth: month,
     }),
     recurringBillCodec.parse({
       ...base,
@@ -226,7 +223,6 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
       debtId: SEED_IDS.debts.emprestimo,
       isActive: true,
       startMonth: month,
-      lastGeneratedMonth: month,
     }),
   ];
 
@@ -297,7 +293,15 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     }),
     transactionCodec.parse({
       ...base,
-      id: SEED_IDS.transactions.internet,
+      /**
+       * Id DETERMINSTICO da ocorrencia, nao um id fixo qualquer.
+       *
+       * Esta transacao e a materializacao da recorrencia de internet neste
+       * mes, entao precisa ter a identidade de uma ocorrencia. Com um id
+       * arbitrario, abrir o mes faria o materializador nao reconhece-la e
+       * criar uma SEGUNDA conta de internet de R$ 120.
+       */
+      id: occurrenceId(SEED_IDS.recurringBills.internet, month),
       flow: 'operational',
       description: 'Internet',
       amountCents: moneyFromReais(120),
@@ -336,7 +340,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
     }),
     transactionCodec.parse({
       ...base,
-      id: SEED_IDS.transactions.emprestimo,
+      id: occurrenceId(SEED_IDS.recurringBills.emprestimo, month),
       flow: 'operational',
       description: 'Empréstimo',
       amountCents: moneyFromReais(440),

@@ -9,6 +9,7 @@ import { civilMonthResolver } from '@/domain/shared/period';
 import type { MonthKey } from '@/domain/shared/plain-date';
 
 import { useDataSource } from '../app/data-source-context';
+import { useMonthReady } from '../period/use-month-ready';
 import { queryKeys } from '../app/query-keys';
 
 /**
@@ -28,12 +29,21 @@ export async function loadMonthTransactions(
   });
 }
 
+/**
+ * A lista tambem espera a materializacao do mes.
+ *
+ * Abrir `/transacoes?month=2026-10` direto, sem passar pela Dashboard, tem de
+ * materializar outubro igual: a garantia e de visitar o MES, nao de abrir uma
+ * tela especifica. `useMonthReady` e o mesmo das duas telas e roda uma vez so.
+ */
 export function useTransactions(month: MonthKey) {
   const dataSource = useDataSource();
+  const { isReady } = useMonthReady(month);
 
   return useQuery<Transaction[]>({
     queryKey: queryKeys.transactionsByMonth(month),
     queryFn: () => loadMonthTransactions(dataSource, month),
+    enabled: isReady,
   });
 }
 

@@ -12,6 +12,7 @@ import { useCreateTransaction } from './use-transaction-mutations';
 import { useCategories } from './use-transactions';
 import { useCards } from '../cards/use-cards';
 import { useDebts } from '../debts/use-debts';
+import { useRecurringBills } from '../recurring/use-recurring-bills';
 
 /**
  * Criacao de lancamento, disponivel em qualquer tela pelo FAB.
@@ -28,6 +29,7 @@ export function CreateTransactionSheet({ month }: { month: MonthKey }) {
   const categoriesQuery = useCategories();
   const cardsQuery = useCards();
   const debtsQuery = useDebts();
+  const recurringQuery = useRecurringBills();
   const createTransaction = useCreateTransaction();
 
   const handleSubmit = async (values: TransactionFormValues) => {
@@ -54,6 +56,7 @@ export function CreateTransactionSheet({ month }: { month: MonthKey }) {
       categories={categoriesQuery.data ?? []}
       cards={cardsQuery.data ?? []}
       debts={debtsQuery.data ?? []}
+      recurringBills={recurringQuery.data ?? []}
       isSaving={createTransaction.isPending}
       saveError={createTransaction.error}
       onSubmit={handleSubmit}

@@ -221,6 +221,39 @@ function createTransactionRepository(context: RepositoryContext): TransactionRep
 
       return entities;
     },
+
+    /**
+     * Insere so o que ainda nao existe, respeitando o id do chamador.
+     *
+     * A checagem de existencia acontece DENTRO do `mutate`, sobre o mesmo
+     * snapshot que sera gravado — nao antes dele. E considera os registros
+     * excluidos logicamente: uma ocorrencia apagada pelo usuario continua
+     * ocupando o id, entao nao e recriada.
+     */
+    async insertManyIgnoringExisting(
+      inputs: readonly (CreateInput<Transaction> & { id: ID })[],
+    ): Promise<Transaction[]> {
+      if (inputs.length === 0) return [];
+
+      const now = context.database.now();
+      const candidates = inputs.map((input) =>
+        transactionCodec.parse({ ...input, createdAt: now, updatedAt: now }),
+      );
+
+      let inserted: Transaction[] = [];
+
+      context.database.mutate((draft) => {
+        // Inclui excluidos de proposito: o id continua ocupado.
+        const taken = new Set(draft.collections.transactions.map((row) => row.id));
+        inserted = candidates.filter((entity) => !taken.has(entity.id));
+
+        if (inserted.length > 0) {
+          draft.collections.transactions = [...draft.collections.transactions, ...inserted];
+        }
+      });
+
+      return inserted;
+    },
   };
 }
 

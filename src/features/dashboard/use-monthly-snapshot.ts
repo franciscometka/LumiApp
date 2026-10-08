@@ -17,6 +17,7 @@ import { todayPlainDate } from '@/domain/shared/plain-date';
 
 import type { DataSource } from '@/data/ports/data-source';
 import { useDataSource } from '@/features/app/data-source-context';
+import { useMonthReady } from '@/features/period/use-month-ready';
 import { queryKeys } from '@/features/app/query-keys';
 
 /**
@@ -104,11 +105,23 @@ function spanningPeriod(previous: Period, current: Period): Period {
  * A chave inclui o mes: trocar de mes e uma entrada de cache diferente, e
  * voltar para um mes ja visto reaproveita o resultado.
  */
+/**
+ * `enabled: isReady` e a aplicacao da ordem "visitar o mes garante suas
+ * recorrencias": o snapshot so e calculado depois que a materializacao
+ * daquele mes terminou. Sem isso, o Dashboard somaria um mes incompleto e
+ * exibiria totais errados ate o refetch — numeros errados por pouco tempo
+ * ainda sao numeros errados.
+ *
+ * A materializacao em si nao e responsabilidade desta feature: `useMonthReady`
+ * mora no periodo e e compartilhado com Transacoes.
+ */
 export function useMonthlySnapshot(month: MonthKey) {
   const dataSource = useDataSource();
+  const { isReady } = useMonthReady(month);
 
   return useQuery<MonthlySnapshotData>({
     queryKey: queryKeys.monthlySnapshot(month),
     queryFn: () => loadMonthlySnapshot(dataSource, month),
+    enabled: isReady,
   });
 }

@@ -28,8 +28,24 @@ export interface TransactionRepository extends Repository<Transaction> {
   findByFilter(filter: TransactionFilter, options?: ListOptions): Promise<Transaction[]>;
   findByCardId(cardId: ID, options?: ListOptions): Promise<Transaction[]>;
   findByDebtId(debtId: ID, options?: ListOptions): Promise<Transaction[]>;
-  /** Gravacao em lote, usada pela materializacao de contas recorrentes. */
+  /** Gravacao em lote com ids gerados. */
   createMany(inputs: readonly Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>[]): Promise<Transaction[]>;
+
+  /**
+   * Gravacao em lote com id FORNECIDO pelo chamador, ignorando os ids que ja
+   * existem. E a operacao da materializacao de contas recorrentes.
+   *
+   * Semantica: `ON CONFLICT DO NOTHING`. Um id ja presente — inclusive
+   * excluido logicamente — nao e sobrescrito nem duplicado. E isso que torna
+   * a materializacao idempotente sem depender de verificar antes de gravar, e
+   * e o que o adapter Supabase vai traduzir para `upsert(..., { ignoreDuplicates: true })`
+   * sobre a chave primaria.
+   *
+   * Devolve apenas as linhas efetivamente inseridas.
+   */
+  insertManyIgnoringExisting(
+    inputs: readonly (Omit<Transaction, 'createdAt' | 'updatedAt' | 'deletedAt'> & { id: ID })[],
+  ): Promise<Transaction[]>;
 }
 
 export interface CategoryRepository extends Repository<Category> {
