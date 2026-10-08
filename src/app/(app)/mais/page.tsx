@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronRight, HandCoins, History, Repeat } from 'lucide-react';
+import { ChevronRight, HandCoins, History, Repeat, Settings } from 'lucide-react';
 
 import { PageShell } from '@/components/layout/page-shell';
 import { PersistenceStatusCard } from '@/features/app/persistence-status-card';
@@ -24,16 +24,12 @@ const SECTIONS = [
     href: '/historico' as const,
     icon: History,
   },
-];
-
-/**
- * Cada item diz o lote em que chega. "Categorias" nao tem lote: gerenciar
- * categorias nunca foi especificado, e anunciar uma data inventada seria
- * prometer o que ninguem combinou.
- */
-const UPCOMING = [
-  { label: 'Ajustes', when: 'Lote 10' },
-  { label: 'Categorias', when: 'Em breve' },
+  {
+    label: 'Ajustes',
+    description: 'Preferências e backup dos seus dados.',
+    href: '/ajustes' as const,
+    icon: Settings,
+  },
 ];
 
 /**
@@ -69,23 +65,6 @@ export default function MaisPage() {
         </nav>
 
         <PersistenceStatusCard />
-
-        <section className="bg-card rounded-xl border">
-          <h2 className="text-muted-foreground border-b px-5 py-3 text-xs font-medium tracking-wide uppercase">
-            Em construção
-          </h2>
-          <ul className="divide-y">
-            {UPCOMING.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center justify-between gap-4 px-5 py-3.5 text-sm"
-              >
-                <span>{item.label}</span>
-                <span className="text-muted-foreground text-xs">{item.when}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
     </PageShell>
   );

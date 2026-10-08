@@ -19,6 +19,7 @@ import type { CategoryColorToken } from '@/domain/entities/category';
 
 import type { CardFormErrors, CardFormValues } from '../card-form';
 import { cardValuesFrom, emptyCardValues, validateCardForm } from '../card-form';
+import { CardNameConflictError } from '../use-cards';
 
 
 /**
@@ -36,6 +37,7 @@ export function CardFormSheet({
   saveError,
   onSubmit,
   onRequestDelete,
+  existingCards,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +46,8 @@ export function CardFormSheet({
   saveError: Error | null;
   onSubmit: (values: CardFormValues) => Promise<void>;
   onRequestDelete?: (() => void) | undefined;
+  /** Para a regra de nome unico. Pode incluir excluidos: a regra os ignora. */
+  existingCards: readonly Card[];
 }) {
   const fieldId = useId();
   const isEditing = card !== undefined;
@@ -62,7 +66,7 @@ export function CardFormSheet({
     event.preventDefault();
     if (isSaving) return;
 
-    const result = validateCardForm(values);
+    const result = validateCardForm(values, existingCards, card?.id);
     if (!result.ok) {
       setErrors(result.errors);
       return;
@@ -179,7 +183,9 @@ export function CardFormSheet({
               role="alert"
               className="bg-expense-surface text-expense rounded-lg px-3 py-2.5 text-sm font-medium"
             >
-              Não foi possível salvar. Nada foi alterado — tente de novo.
+              {saveError instanceof CardNameConflictError
+                ? saveError.message
+                : 'Não foi possível salvar. Nada foi alterado — tente de novo.'}
             </p>
           )}
 

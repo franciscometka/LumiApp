@@ -11,6 +11,15 @@ import { cn } from '@/lib/utils';
  * Cada metrica extra aqui custa atencao e devolve pouco: comprometimento,
  * taxa de poupanca e projecao ja aparecem como insight, onde viram frase em
  * vez de mais um numero solto a interpretar.
+ *
+ * ## Caixa, com nome de caixa
+ *
+ * Os dois primeiros cards sao de CAIXA: Entradas - Saidas = Saldo, e por isso
+ * incluem transferencias. O nome acompanha o numero — "Saidas", nao "Gastos",
+ * porque guardar dinheiro na reserva sai do caixa sem ser gasto. Quando ha
+ * transferencia, a linha de apoio separa o que foi renda/gasto do que apenas
+ * mudou de lugar. Renda gerada e gastos operacionais, sem transferencias,
+ * sao a lingua do Planejamento e do Historico.
  */
 export function StatCards({ snapshot }: { snapshot: PeriodSnapshot }) {
   const { totals, pending } = snapshot;
@@ -27,12 +36,24 @@ export function StatCards({ snapshot }: { snapshot: PeriodSnapshot }) {
         // 3.100 de entradas" sugeriria que o mes gerou R$ 3.100.
         footnote={
           totals.transferIn > 0
-            ? `${formatMoney(totals.earnedIncome)} de renda · ${formatMoney(totals.transferIn)} da reserva`
+            ? `${formatMoney(totals.earnedIncome)} de renda gerada · ${formatMoney(totals.transferIn)} da reserva`
             : undefined
         }
       />
 
-      <StatCard icon={ArrowUpRight} label="Gastos" value={totals.expense} tone="expense" />
+      <StatCard
+        icon={ArrowUpRight}
+        label="Saídas"
+        value={totals.expense}
+        tone="expense"
+        // O espelho da nota de Entradas: o que foi consumo e o que so mudou
+        // de lugar.
+        footnote={
+          totals.transferOut > 0
+            ? `${formatMoney(totals.operationalExpense)} em gastos · ${formatMoney(totals.transferOut)} para a reserva`
+            : undefined
+        }
+      />
 
       <StatCard
         icon={Clock}

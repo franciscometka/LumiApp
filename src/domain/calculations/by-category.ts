@@ -37,6 +37,9 @@ export const EMPTY_BREAKDOWN: CategoryBreakdown = {
  * Por padrao considera apenas saidas: "onde estou gastando mais" e a pergunta
  * que esta distribuicao responde, e misturar entradas na mesma pizza tornaria
  * o grafico ilegivel.
+ *
+ * Transferencias ficam fora nos dois lados: a distribuicao e de gastos e de
+ * renda operacionais, nao de movimento de caixa.
  */
 export function calculateCategoryBreakdown(
   transactions: readonly Transaction[],
@@ -48,6 +51,9 @@ export function calculateCategoryBreakdown(
 
   for (const transaction of transactions) {
     if (transaction.type !== type) continue;
+    // Transferencia nao e gasto nem renda: "Dinheiro guardado" nao pode virar
+    // a maior categoria de gastos do mes.
+    if (transaction.flow === 'transfer') continue;
     const bucket = buckets.get(transaction.categoryId) ?? { values: [], count: 0 };
     bucket.values.push(transaction.amountCents);
     bucket.count += 1;

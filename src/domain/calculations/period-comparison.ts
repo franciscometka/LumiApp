@@ -20,12 +20,23 @@ export interface MetricComparison {
   readonly trend: Trend;
 }
 
+/**
+ * Os nomes dizem o que se compara.
+ *
+ * "Gastou X% a mais" e uma frase sobre CONSUMO: compara gastos operacionais.
+ * Guardar R$ 500 na reserva nao e gastar mais — antes do Lote 10 esta
+ * comparacao usava `expense`, e economizar aparecia como gasto maior. Pelo
+ * mesmo motivo a renda e a renda gerada. So o saldo e de caixa, e se chama
+ * `balance`.
+ */
 export interface PeriodComparison {
-  readonly income: MetricComparison;
-  readonly expense: MetricComparison;
+  readonly earnedIncome: MetricComparison;
+  readonly operationalExpense: MetricComparison;
   readonly balance: MetricComparison;
   readonly hasPreviousData: boolean;
 }
+
+export type ComparedMetric = 'earnedIncome' | 'operationalExpense' | 'balance';
 
 function compareMetric(current: Money, previous: Money): MetricComparison {
   const deltaCents = subtractMoney(current, previous);
@@ -43,8 +54,8 @@ export function comparePeriods(
   previous: PeriodTotals,
 ): PeriodComparison {
   return {
-    income: compareMetric(current.income, previous.income),
-    expense: compareMetric(current.expense, previous.expense),
+    earnedIncome: compareMetric(current.earnedIncome, previous.earnedIncome),
+    operationalExpense: compareMetric(current.operationalExpense, previous.operationalExpense),
     balance: compareMetric(current.balance, previous.balance),
     hasPreviousData: previous.transactionCount > 0,
   };
@@ -55,7 +66,7 @@ export function comparePeriods(
  * Gastar mais e ruim; receber mais e bom. A direcao crua nao basta para a UI
  * escolher a cor.
  */
-export function isFavorable(comparison: MetricComparison, metric: 'income' | 'expense' | 'balance'): boolean {
+export function isFavorable(comparison: MetricComparison, metric: ComparedMetric): boolean {
   if (comparison.trend === 'flat') return true;
-  return metric === 'expense' ? comparison.trend === 'down' : comparison.trend === 'up';
+  return metric === 'operationalExpense' ? comparison.trend === 'down' : comparison.trend === 'up';
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useSheetSession } from '@/components/ui/sheet-session';
 import { civilMonthResolver } from '@/domain/shared/period';
 import type { MonthKey, PlainDate } from '@/domain/shared/plain-date';
 import { firstDayOfMonth, monthKeyOf, todayPlainDate } from '@/domain/shared/plain-date';
@@ -24,6 +25,7 @@ import { useRecurringBills } from '../recurring/use-recurring-bills';
  */
 export function CreateTransactionSheet({ month }: { month: MonthKey }) {
   const isOpen = useUiStore((state) => state.isQuickAddOpen);
+  const session = useSheetSession(isOpen ? true : null);
   const setQuickAddOpen = useUiStore((state) => state.setQuickAddOpen);
 
   const categoriesQuery = useCategories();
@@ -43,12 +45,15 @@ export function CreateTransactionSheet({ month }: { month: MonthKey }) {
     createTransaction.reset();
   };
 
-  // Montada so quando aberta: ver a nota em `TransactionSheet`.
-  if (!isOpen) return null;
+  // Antes de abrir pela primeira vez nao ha o que montar. Depois, a sessao
+  // mantem a Sheet montada durante a saida e troca a chave a cada abertura,
+  // para o formulario nascer limpo (ver `useSheetSession`).
+  if (session.value === null) return null;
 
   return (
     <TransactionSheet
-      open
+      key={session.key}
+      open={session.open}
       onOpenChange={(open) => {
         setQuickAddOpen(open);
         if (!open) createTransaction.reset();

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Card } from '@/domain/entities/card';
+import { cardNameConflictMessage, findCardNameConflict } from '@/domain/entities/card';
 import type { ID } from '@/domain/shared/id';
 import type { Money } from '@/domain/shared/money';
 
@@ -33,12 +34,33 @@ export function useCards() {
   });
 }
 
+/**
+ * O formulario ja barra nome repetido; esta checagem na gravacao cobre o que
+ * ele nao ve — outra aba que criou o mesmo nome depois que a lista carregou.
+ */
+export class CardNameConflictError extends Error {
+  constructor(existing: Card) {
+    super(cardNameConflictMessage(existing));
+    this.name = 'CardNameConflictError';
+  }
+}
+
+async function assertUniqueName(
+  dataSource: ReturnType<typeof useDataSource>,
+  name: string,
+  exceptId?: ID,
+): Promise<void> {
+  const conflict = findCardNameConflict(name, await dataSource.cards.findAll(), exceptId);
+  if (conflict !== null) throw new CardNameConflictError(conflict);
+}
+
 export function useCreateCard() {
   const dataSource = useDataSource();
   const queryClient = useQueryClient();
 
   return useMutation<Card, Error, CardDraft>({
     mutationFn: async (draft) => {
+      await assertUniqueName(dataSource, draft.name);
       const settings = await dataSource.settings.get();
       return dataSource.cards.create({ ...draft, userId: settings.userId });
     },
@@ -53,7 +75,10 @@ export function useUpdateCard() {
   const queryClient = useQueryClient();
 
   return useMutation<Card, Error, { id: ID; draft: CardDraft }>({
-    mutationFn: ({ id, draft }) => dataSource.cards.update(id, draft),
+    mutationFn: async ({ id, draft }) => {
+      await assertUniqueName(dataSource, draft.name, id);
+      return dataSource.cards.update(id, draft);
+    },
     onSuccess: async () => {
       await invalidateCards(queryClient);
     },

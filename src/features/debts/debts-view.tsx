@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useSheetSession } from '@/components/ui/sheet-session';
 import type { Debt } from '@/domain/entities/debt';
 import { todayPlainDate } from '@/domain/shared/plain-date';
 
@@ -45,6 +46,10 @@ export function DebtsView() {
   const [editing, setEditing] = useState<Debt | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Debt | null>(null);
   const [justDeleted, setJustDeleted] = useState<Debt | null>(null);
+
+  // Sessoes das Sheets: formulario limpo a cada abertura e saida animada.
+  const createSheet = useSheetSession(isCreating ? true : null);
+  const editSheet = useSheetSession(editing);
 
   const debts = useMemo(() => debtsQuery.data ?? [], [debtsQuery.data]);
 
@@ -202,9 +207,10 @@ export function DebtsView() {
         </div>
       )}
 
-      {isCreating ? (
+      {createSheet.value === null ? null : (
         <DebtFormSheet
-          open
+          key={createSheet.key}
+          open={createSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setIsCreating(false);
@@ -215,23 +221,24 @@ export function DebtsView() {
           saveError={createDebt.error}
           onSubmit={handleCreate}
         />
-      ) : null}
+      )}
 
-      {editing === null ? null : (
+      {editSheet.value === null ? null : (
         <DebtFormSheet
-          open
+          key={editSheet.key}
+          open={editSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setEditing(null);
               updateDebt.reset();
             }
           }}
-          debt={editing}
+          debt={editSheet.value}
           isSaving={updateDebt.isPending}
           saveError={updateDebt.error}
           onSubmit={handleUpdate}
           onRequestDelete={() => {
-            setPendingDelete(editing);
+            setPendingDelete(editSheet.value);
           }}
         />
       )}

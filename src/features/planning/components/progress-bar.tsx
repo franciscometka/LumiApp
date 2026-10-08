@@ -73,10 +73,13 @@ export function ProgressBar({
  */
 export function GoalRow({
   label,
+  hint,
   percentage,
   children,
 }: {
   label: string;
+  /** Definicao curta da grandeza, quando o nome sozinho nao basta. */
+  hint?: string;
   percentage: number | null;
   children: React.ReactNode;
 }) {
@@ -89,6 +92,9 @@ export function GoalRow({
         </span>
       </div>
       <div className="mt-0.5 text-sm">{children}</div>
+      {hint === undefined ? null : (
+        <p className="text-muted-foreground mt-0.5 text-[11px]">{hint}</p>
+      )}
     </div>
   );
 }

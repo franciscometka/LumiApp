@@ -48,14 +48,14 @@ export function createBrowserStorageDriver(): StorageDriver {
   if (typeof window === 'undefined') {
     throw new DataError(
       'storage_unavailable',
-      'localStorage nao existe neste ambiente. O adapter local so pode ser usado no cliente.',
+      'localStorage não existe neste ambiente. O adapter local só pode ser usado no cliente.',
     );
   }
 
   if (!isBrowserStorageAvailable()) {
     throw new DataError(
       'storage_unavailable',
-      'localStorage esta bloqueado neste navegador (modo privado ou permissao negada).',
+      'O armazenamento local está bloqueado neste navegador (modo privado ou permissão negada).',
     );
   }
 

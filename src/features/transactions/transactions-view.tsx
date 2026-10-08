@@ -6,7 +6,8 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { countInGroups, groupByDay } from '@/domain/calculations/grouping';
+import { useSheetSession } from '@/components/ui/sheet-session';
+import { countInGroups, groupByDay, splitByToday } from '@/domain/calculations/grouping';
 import type { Transaction } from '@/domain/entities/transaction';
 import { useUiStore } from '@/stores/ui-store';
 import { todayPlainDate } from '@/domain/shared/plain-date';
@@ -76,6 +77,8 @@ export function TransactionsView() {
   const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
   /** Ultima excluida, para o "Desfazer". */
   const [justDeleted, setJustDeleted] = useState<Transaction | null>(null);
+  // Formulario limpo a cada abertura e saida animada.
+  const editSheet = useSheetSession(editing);
 
   const filters = filtersFromParams(new URLSearchParams(searchParams.toString()));
 
@@ -179,7 +182,7 @@ export function TransactionsView() {
         />
       ) : (
         <TransactionList
-          groups={groups}
+          timeline={splitByToday(groups, today)}
           today={today}
           categoriesById={categoriesById}
           onSelect={setEditing}
@@ -220,19 +223,21 @@ export function TransactionsView() {
         A MESMA sheet da criacao, com `transaction` preenchido. Um formulario,
         duas mutations.
 
-        Montada so durante a edicao: trocar de transacao desmonta e remonta,
-        entao o formulario nunca exibe os dados da anterior.
+        Cada abertura (ou troca de transacao) ganha chave nova em
+        `useSheetSession`: o formulario remonta e nunca exibe os dados da
+        anterior. Ao fechar, a mesma transacao fica montada ate a saida animar.
       */}
-      {editing === null ? null : (
+      {editSheet.value === null ? null : (
         <TransactionSheet
-          open
+          key={editSheet.key}
+          open={editSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setEditing(null);
               updateTransaction.reset();
             }
           }}
-          transaction={editing}
+          transaction={editSheet.value}
           categories={categories}
           cards={cardsQuery.data ?? []}
           debts={debtsQuery.data ?? []}
@@ -241,7 +246,7 @@ export function TransactionsView() {
           saveError={updateTransaction.error}
           onSubmit={handleSave}
           onRequestDelete={() => {
-            setPendingDelete(editing);
+            setPendingDelete(editSheet.value);
           }}
         />
       )}

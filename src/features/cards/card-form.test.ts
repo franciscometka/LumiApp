@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Card } from '@/domain/entities/card';
+import { findCardNameConflict, normalizeCardName } from '@/domain/entities/card';
 
 import {
   cardValuesFrom,
@@ -191,5 +192,51 @@ describe('validateInvoice — atualizacao rapida', () => {
   it('recusa negativo e texto invalido', () => {
     expect(validateInvoice('-10')).toBeNull();
     expect(validateInvoice('abc')).toBeNull();
+  });
+});
+
+describe('nome unico entre cartoes ativos', () => {
+  const nubank = makeCard({ id: 'c-nu', name: 'Nubank' });
+  const existentes = [nubank, makeCard({ id: 'c-inter', name: 'Inter' })];
+
+  it('normaliza caixa, acento e espacos', () => {
+    expect(normalizeCardName('  NÚBANK ')).toBe('nubank');
+    expect(normalizeCardName('Nu   Bank')).toBe('nu bank');
+    expect(normalizeCardName('Crédito Itaú')).toBe('credito itau');
+  });
+
+  it('bloqueia o mesmo nome escrito de outro jeito', () => {
+    for (const nome of ['Nubank', 'nubank', 'NÚBANK', '  Nubank  ', 'nUbAnK']) {
+      const result = validateCardForm(values({ name: nome }), existentes);
+      expect(result.ok, nome).toBe(false);
+      if (!result.ok) expect(result.errors.name).toContain('Já existe um cartão chamado "Nubank"');
+    }
+  });
+
+  it('nome diferente passa', () => {
+    expect(validateCardForm(values({ name: 'Nubank PJ' }), existentes).ok).toBe(true);
+  });
+
+  it('o proprio cartao em edicao nao conflita consigo', () => {
+    expect(validateCardForm(values({ name: 'NUBANK' }), existentes, 'c-nu').ok).toBe(true);
+  });
+
+  it('editar um cartao para o nome de OUTRO e bloqueado', () => {
+    expect(validateCardForm(values({ name: 'inter' }), existentes, 'c-nu').ok).toBe(false);
+  });
+
+  it('cartao excluido nao bloqueia o nome', () => {
+    const excluido = makeCard({ id: 'c-old', name: 'Magalu', deletedAt: '2026-10-01T00:00:00.000Z' });
+    expect(validateCardForm(values({ name: 'Magalu' }), [excluido]).ok).toBe(true);
+    expect(findCardNameConflict('Magalu', [excluido])).toBeNull();
+  });
+
+  it('cartao arquivado nao e ativo e nao bloqueia', () => {
+    const arquivado = makeCard({ id: 'c-arq', name: 'Magalu', archivedAt: '2026-10-01T00:00:00.000Z' });
+    expect(findCardNameConflict('magalu', [arquivado])).toBeNull();
+  });
+
+  it('sem lista de comparacao, nao ha conflito a apontar', () => {
+    expect(validateCardForm(values({ name: 'Nubank' })).ok).toBe(true);
   });
 });

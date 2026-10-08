@@ -15,11 +15,14 @@ import { cn } from '@/lib/utils';
  *
  * Sem dados no mes anterior, a secao nao aparece. "+100%" a partir do zero
  * seria invencao, e "0%" seria mentira.
+ *
+ * Compara GASTOS OPERACIONAIS, nao saidas de caixa: guardar dinheiro na
+ * reserva nao e "gastar a mais que no mes passado".
  */
 export function MonthComparison({ comparison }: { comparison: PeriodComparison }) {
   if (!comparison.hasPreviousData) return null;
 
-  const { expense } = comparison;
+  const { operationalExpense: expense } = comparison;
   const change = expense.changePercentage;
 
   return (
@@ -30,7 +33,7 @@ export function MonthComparison({ comparison }: { comparison: PeriodComparison }
 
       <div className="mt-4 flex items-end justify-between gap-4">
         <div>
-          <p className="text-muted-foreground text-xs">Gastos no mês passado</p>
+          <p className="text-muted-foreground text-xs">Gastos operacionais no mês passado</p>
           <MoneyText value={expense.previous} size="sm" className="mt-1 block" />
         </div>
 

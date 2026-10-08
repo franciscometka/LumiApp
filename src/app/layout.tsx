@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Finan',
-  description: 'Controle das suas financas do mes, sem planilha.',
+  description: 'Controle das suas finanças do mês, sem planilha.',
   applicationName: 'Finan',
 };
 

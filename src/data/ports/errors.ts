@@ -89,5 +89,5 @@ export function isDataError(value: unknown): value is DataError {
 }
 
 export function notFound(collection: string, id: string): DataError {
-  return new DataError('not_found', `Registro nao encontrado em ${collection}: ${id}`);
+  return new DataError('not_found', `Registro não encontrado em ${collection}: ${id}`);
 }

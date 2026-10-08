@@ -290,7 +290,56 @@ describe('API de manutencao', () => {
     expect(JSON.parse(await dataSource.maintenance.exportJson())).toHaveProperty('schemaVersion');
 
     await dataSource.maintenance.reset('apagar-tudo');
-    expect((await dataSource.maintenance.status()).state).toBe('empty');
+    expect(await dataSource.transactions.count({ includeDeleted: true })).toBe(0);
+    expect((await dataSource.maintenance.status()).state).toBe('ready');
+  });
+
+  it('previewImport descreve o backup sem gravar nada', async () => {
+    const origem = makeStack();
+    await origem.dataSource.transactions.create(transacaoBase);
+    const backup = await origem.dataSource.maintenance.exportJson();
+
+    const destino = makeStack();
+    const antes = await destino.dataSource.maintenance.exportRaw();
+    const preview = await destino.dataSource.maintenance.previewImport(backup);
+
+    expect(preview.counts.transactions).toBe(1);
+    expect(preview.schemaVersion).toBeGreaterThan(0);
+    // Nada mudou no destino.
+    expect(await destino.dataSource.maintenance.exportRaw()).toBe(antes);
+  });
+
+  it('exportar e importar devolve os mesmos dados', async () => {
+    const origem = makeStack();
+    await origem.dataSource.transactions.create(transacaoBase);
+    const backup = await origem.dataSource.maintenance.exportJson();
+
+    const destino = makeStack();
+    await destino.dataSource.maintenance.importJson(backup);
+
+    expect(JSON.parse(await destino.dataSource.maintenance.exportJson())).toEqual(
+      JSON.parse(backup),
+    );
+  });
+
+  it('arquivo invalido nao grava absolutamente nada', async () => {
+    const { dataSource } = makeStack();
+    await dataSource.transactions.create(transacaoBase);
+    const antes = await dataSource.maintenance.exportRaw();
+
+    for (const lixo of ['nao e json', '[]', '{"schemaVersion": 1}', '{"foo": 1}']) {
+      await expect(dataSource.maintenance.previewImport(lixo), lixo).rejects.toThrow(DataError);
+      await expect(dataSource.maintenance.importJson(lixo), lixo).rejects.toThrow(DataError);
+    }
+
+    // Um backup quase valido, com UM registro quebrado, tambem e recusado
+    // inteiro: nao existe "importar o que deu".
+    const quase = JSON.parse(await dataSource.maintenance.exportJson());
+    quase.collections.transactions[0].amountCents = -5;
+    await expect(dataSource.maintenance.importJson(JSON.stringify(quase))).rejects.toThrow(DataError);
+
+    expect(await dataSource.maintenance.exportRaw()).toBe(antes);
+    expect(await dataSource.transactions.count()).toBe(1);
   });
 
   it('reset exige a confirmacao exata', async () => {

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useSheetSession } from '@/components/ui/sheet-session';
 import { buildCardOverview, sortCardsByDueDate } from '@/domain/calculations/cards';
 import type { Card } from '@/domain/entities/card';
 import { todayPlainDate } from '@/domain/shared/plain-date';
@@ -49,6 +50,11 @@ export function CardsView() {
   const [pendingDelete, setPendingDelete] = useState<Card | null>(null);
   const [justDeleted, setJustDeleted] = useState<Card | null>(null);
 
+  // Sessoes das Sheets: formulario limpo a cada abertura e saida animada.
+  const createSheet = useSheetSession(isCreating ? true : null);
+  const editSheet = useSheetSession(editing);
+  const invoiceSheet = useSheetSession(invoiceTarget);
+
   const cards = useMemo(() => cardsQuery.data ?? [], [cardsQuery.data]);
 
   // Excluidos ficam no cache para resolver vinculos historicos, mas nao
@@ -59,7 +65,7 @@ export function CardsView() {
   );
 
   const handleCreate = async (values: CardFormValues) => {
-    const result = validateCardForm(values);
+    const result = validateCardForm(values, cards);
     if (!result.ok) return;
 
     await createCard.mutateAsync(result.draft);
@@ -69,7 +75,7 @@ export function CardsView() {
 
   const handleUpdate = async (values: CardFormValues) => {
     if (editing === null) return;
-    const result = validateCardForm(values);
+    const result = validateCardForm(values, cards, editing.id);
     if (!result.ok) return;
 
     await updateCard.mutateAsync({ id: editing.id, draft: result.draft });
@@ -204,9 +210,10 @@ export function CardsView() {
         </div>
       )}
 
-      {isCreating ? (
+      {createSheet.value === null ? null : (
         <CardFormSheet
-          open
+          key={createSheet.key}
+          open={createSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setIsCreating(false);
@@ -215,39 +222,43 @@ export function CardsView() {
           }}
           isSaving={createCard.isPending}
           saveError={createCard.error}
+          existingCards={cards}
           onSubmit={handleCreate}
         />
-      ) : null}
+      )}
 
-      {editing === null ? null : (
+      {editSheet.value === null ? null : (
         <CardFormSheet
-          open
+          key={editSheet.key}
+          open={editSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setEditing(null);
               updateCard.reset();
             }
           }}
-          card={editing}
+          card={editSheet.value}
           isSaving={updateCard.isPending}
           saveError={updateCard.error}
+          existingCards={cards}
           onSubmit={handleUpdate}
           onRequestDelete={() => {
-            setPendingDelete(editing);
+            setPendingDelete(editSheet.value);
           }}
         />
       )}
 
-      {invoiceTarget === null ? null : (
+      {invoiceSheet.value === null ? null : (
         <InvoiceSheet
-          open
+          key={invoiceSheet.key}
+          open={invoiceSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setInvoiceTarget(null);
               updateInvoice.reset();
             }
           }}
-          card={invoiceTarget}
+          card={invoiceSheet.value}
           isSaving={updateInvoice.isPending}
           saveError={updateInvoice.error}
           onSubmit={handleInvoice}

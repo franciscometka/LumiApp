@@ -1,4 +1,5 @@
 import type { Card } from '@/domain/entities/card';
+import { cardNameConflictMessage, findCardNameConflict } from '@/domain/entities/card';
 import type { CategoryColorToken } from '@/domain/entities/category';
 import type { Money } from '@/domain/shared/money';
 import { formatMoneyPlain, parseMoney } from '@/domain/shared/money';
@@ -78,12 +79,25 @@ function parseNonNegative(raw: string): Money | null {
   return value;
 }
 
-export function validateCardForm(values: CardFormValues): CardFormResult {
+/**
+ * `existingCards` e `editingId` alimentam a regra de nome unico entre
+ * cartoes ativos. Sem eles (testes antigos, chamadas de conversao) a regra
+ * simplesmente nao tem com quem comparar.
+ */
+export function validateCardForm(
+  values: CardFormValues,
+  existingCards: readonly Card[] = [],
+  editingId?: string,
+): CardFormResult {
   const errors: Record<string, string> = {};
 
   const name = values.name.trim();
   if (name === '') errors.name = 'Dê um nome ao cartão.';
   else if (name.length > NAME_MAX) errors.name = `Use até ${String(NAME_MAX)} caracteres.`;
+  else {
+    const conflict = findCardNameConflict(name, existingCards, editingId);
+    if (conflict !== null) errors.name = cardNameConflictMessage(conflict);
+  }
 
   const limitCents = parseNonNegative(values.limit);
   if (limitCents === null) errors.limit = 'Limite inválido. Use vírgula para os centavos.';

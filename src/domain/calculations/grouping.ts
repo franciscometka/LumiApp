@@ -61,3 +61,33 @@ export function groupByDay(transactions: readonly Transaction[]): DayGroup[] {
 export function countInGroups(groups: readonly DayGroup[]): number {
   return groups.reduce((total, group) => total + group.transactions.length, 0);
 }
+
+/**
+ * O extrato, separado do que ainda vai acontecer.
+ *
+ * - `recorded`: dias ate HOJE, inclusive, do mais recente ao mais antigo —
+ *   o extrato conta primeiro o que aconteceu.
+ * - `upcoming`: dias DEPOIS de hoje, do mais proximo ao mais distante — os
+ *   compromissos na ordem em que vao chegar.
+ *
+ * Antes, a fatura do dia 28 e a academia do dia 31 apareciam no topo da lista
+ * do mes atual, acima de "Hoje", porque a ordem era so por data decrescente.
+ *
+ * A regra e so "comparado a hoje", sem caso especial por mes: num mes
+ * encerrado tudo cai em `recorded`; num mes futuro, tudo em `upcoming`, em
+ * ordem de chegada.
+ */
+export interface DayTimeline {
+  readonly recorded: readonly DayGroup[];
+  readonly upcoming: readonly DayGroup[];
+}
+
+export function splitByToday(groups: readonly DayGroup[], today: PlainDate): DayTimeline {
+  const recorded = groups
+    .filter((group) => group.date <= today)
+    .sort((a, b) => comparePlainDates(b.date, a.date));
+  const upcoming = groups
+    .filter((group) => group.date > today)
+    .sort((a, b) => comparePlainDates(a.date, b.date));
+  return { recorded, upcoming };
+}

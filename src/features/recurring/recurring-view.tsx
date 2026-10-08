@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { MoneyText } from '@/components/finan/money-text';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useSheetSession } from '@/components/ui/sheet-session';
 import type { RecurringBill } from '@/domain/entities/recurring-bill';
 import { formatMonthKey } from '@/domain/shared/plain-date';
 import type { MonthKey } from '@/domain/shared/plain-date';
@@ -59,6 +60,10 @@ export function RecurringView() {
   const [pendingDelete, setPendingDelete] = useState<RecurringBill | null>(null);
   const [pendingEnd, setPendingEnd] = useState<RecurringBill | null>(null);
   const [justDeleted, setJustDeleted] = useState<RecurringBill | null>(null);
+
+  // Sessoes das Sheets: formulario limpo a cada abertura e saida animada.
+  const createSheet = useSheetSession(isCreating ? true : null);
+  const editSheet = useSheetSession(editing);
 
   const bills = useMemo(() => billsQuery.data ?? [], [billsQuery.data]);
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
@@ -234,9 +239,10 @@ export function RecurringView() {
         </div>
       )}
 
-      {isCreating ? (
+      {createSheet.value === null ? null : (
         <RecurringFormSheet
-          open
+          key={createSheet.key}
+          open={createSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setIsCreating(false);
@@ -249,25 +255,26 @@ export function RecurringView() {
           saveError={createBill.error}
           onSubmit={handleCreate}
         />
-      ) : null}
+      )}
 
-      {editing === null ? null : (
+      {editSheet.value === null ? null : (
         <RecurringFormSheet
-          open
+          key={editSheet.key}
+          open={editSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setEditing(null);
               updateBill.reset();
             }
           }}
-          bill={editing}
+          bill={editSheet.value}
           categories={categories}
           currentMonth={month}
           isSaving={updateBill.isPending}
           saveError={updateBill.error}
           onSubmit={handleUpdate}
           onRequestDelete={() => {
-            setPendingDelete(editing);
+            setPendingDelete(editSheet.value);
           }}
         />
       )}

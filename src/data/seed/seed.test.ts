@@ -228,13 +228,24 @@ describe('seedIfEmpty', () => {
     expect(seedIfEmpty({ database, userId: LOCAL_USER_ID, month: MES }).outcome).toBe('not_empty');
   });
 
-  it('volta a semear depois de um reset explicito', () => {
+  it('NAO volta a semear depois de "apagar dados" (Lote 10)', () => {
+    /**
+     * Ate o Lote 9 o reset removia a chave inteira e este teste exigia o
+     * reseed. Na tela, isso seria "Apagar dados" seguido dos dados de
+     * demonstracao reaparecendo na abertura seguinte. O reset agora mantem
+     * categorias e o marcador `seededAt`, entao o seed reconhece a base.
+     */
     const { database } = makeDatabase();
     seedIfEmpty({ database, userId: LOCAL_USER_ID, month: MES });
 
     database.reset();
 
-    expect(seedIfEmpty({ database, userId: LOCAL_USER_ID, month: MES }).outcome).toBe('seeded');
+    expect(seedIfEmpty({ database, userId: LOCAL_USER_ID, month: MES }).outcome).toBe(
+      'already_seeded',
+    );
+    expect(database.load().collections.transactions).toEqual([]);
+    expect(database.load().collections.cards).toEqual([]);
+    expect(database.load().collections.categories.length).toBeGreaterThan(0);
   });
 
   it('usa o mes da data de referencia quando nenhum mes e informado', () => {

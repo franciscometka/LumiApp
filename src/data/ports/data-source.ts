@@ -30,6 +30,20 @@ export interface DatabaseStatus {
   readonly seededAt: string | null;
 }
 
+/** O que um backup contem, por colecao. Mostrado antes de importar. */
+export interface ImportPreview {
+  readonly schemaVersion: number;
+  readonly counts: {
+    readonly transactions: number;
+    readonly categories: number;
+    readonly cards: number;
+    readonly debts: number;
+    readonly recurringBills: number;
+    readonly monthlyPlans: number;
+  };
+  readonly hasSettings: boolean;
+}
+
 /**
  * Superficie de manutencao e recuperacao.
  *
@@ -47,6 +61,13 @@ export interface MaintenanceApi {
   /** Exportacao estruturada. Falha se os dados nao puderem ser lidos. */
   exportJson(): Promise<string>;
 
+  /**
+   * Valida um backup por inteiro e descreve o que ele contem, SEM gravar.
+   * E a mesma validacao de `importJson`; serve para a tela confirmar antes
+   * de substituir. Rejeita com `DataError` se o arquivo for invalido.
+   */
+  previewImport(content: string): Promise<ImportPreview>;
+
   /** Substitui todo o conteudo. Valida antes de gravar; recusa lixo. */
   importJson(content: string): Promise<void>;
 
@@ -58,8 +79,12 @@ export interface MaintenanceApi {
   recover(): Promise<{ recovered: number; discarded: readonly RecordIssue[] }>;
 
   /**
-   * Apaga tudo. E a UNICA operacao destrutiva da camada, e exige confirmacao
-   * explicita no proprio argumento para que nao possa ser chamada por engano.
+   * Apaga os dados financeiros (transacoes, planos, cartoes, dividas,
+   * recorrencias). Categorias e preferencias ficam, e os dados de
+   * demonstracao NAO voltam na proxima abertura.
+   *
+   * E a UNICA operacao destrutiva da camada, e exige confirmacao explicita no
+   * proprio argumento para que nao possa ser chamada por engano.
    */
   reset(confirmation: 'apagar-tudo'): Promise<void>;
 }

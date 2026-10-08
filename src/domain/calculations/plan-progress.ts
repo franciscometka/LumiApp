@@ -102,7 +102,10 @@ export interface PlanProgress {
 
   /* -------- Meta de economia -------- */
   readonly savingsGoalCents: Money;
-  /** Saldo do mes com tudo que esta lancado. Pode ser negativo. */
+  /**
+   * Economia do mes: renda gerada - gastos operacionais, com tudo que esta
+   * lancado (pago + pendente). NAO e o saldo de caixa. Pode ser negativa.
+   */
   readonly projectedSavingsCents: Money;
   /** Progresso REAL, com sinal. -22% permanece -22%. */
   readonly savingsPercentage: number | null;
@@ -195,7 +198,16 @@ export function calculatePlanProgress(
   const committedSpendingCents = totals.operationalExpense;
   const remainingToSpendCents = subtractMoney(spendingLimitCents, committedSpendingCents);
 
-  const projectedSavingsCents = totals.balance;
+  /**
+   * Economia do mes = renda gerada - gastos operacionais (`operationalBalance`).
+   *
+   * Nao e o saldo. Transferencias ficam fora dos dois lados: retirar R$ 100
+   * da reserva nao produz economia, e guardar R$ 500 nela nao a destroi —
+   * antes do Lote 10 esta conta usava `totals.balance`, e mandar dinheiro
+   * para a reserva DIMINUIA a "economia". A meta responde "quanto da renda
+   * gerada deve sobrar depois do consumo", nao "quanto foi transferido".
+   */
+  const projectedSavingsCents = totals.operationalBalance;
   const savingsDifferenceCents = subtractMoney(projectedSavingsCents, savingsGoalCents);
 
   return {

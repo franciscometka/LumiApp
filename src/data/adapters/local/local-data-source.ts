@@ -12,7 +12,12 @@ import type { ID } from '@/domain/shared/id';
 import { createId } from '@/domain/shared/id';
 import type { MonthKey } from '@/domain/shared/plain-date';
 
-import type { DataSource, DatabaseStatus, MaintenanceApi } from '../../ports/data-source';
+import type {
+  DataSource,
+  DatabaseStatus,
+  ImportPreview,
+  MaintenanceApi,
+} from '../../ports/data-source';
 import type { RecordIssue } from '../../ports/errors';
 import { DataError, notFound } from '../../ports/errors';
 import type {
@@ -361,6 +366,23 @@ function createMaintenanceApi(database: LocalDatabase): MaintenanceApi {
       return database.exportJson();
     },
 
+    async previewImport(content: string): Promise<ImportPreview> {
+      const valid = database.validateImport(content);
+      const { collections } = valid;
+      return {
+        schemaVersion: valid.schemaVersion,
+        counts: {
+          transactions: collections.transactions.length,
+          categories: collections.categories.length,
+          cards: collections.cards.length,
+          debts: collections.debts.length,
+          recurringBills: collections.recurringBills.length,
+          monthlyPlans: collections.monthlyPlans.length,
+        },
+        hasSettings: valid.settings !== null,
+      };
+    },
+
     async importJson(content: string): Promise<void> {
       database.importJson(content);
     },
@@ -372,7 +394,7 @@ function createMaintenanceApi(database: LocalDatabase): MaintenanceApi {
 
     async reset(confirmation: 'apagar-tudo'): Promise<void> {
       if (confirmation !== 'apagar-tudo') {
-        throw new DataError('validation_failed', 'Reset exige confirmacao explicita.');
+        throw new DataError('validation_failed', 'Apagar os dados exige confirmação explícita.');
       }
       database.reset();
     },

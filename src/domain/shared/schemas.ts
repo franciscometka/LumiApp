@@ -37,7 +37,7 @@ export const positiveMoneySchema = z.custom<Money>(
 /** Para limites e metas, onde zero e legitimo mas negativo nao. */
 export const nonNegativeMoneySchema = z.custom<Money>(
   (value) => isMoney(value) && value >= 0,
-  { message: 'Valor nao pode ser negativo' },
+  { message: 'Valor não pode ser negativo' },
 );
 
 export const plainDateSchema = z.custom<PlainDate>(isValidPlainDate, {

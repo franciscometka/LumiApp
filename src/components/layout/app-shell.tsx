@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClientProvider } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -9,10 +10,13 @@ import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { DataSourceProvider } from '@/features/app/data-source-context';
 import { useBootState } from '@/features/app/data-source-store';
 import { createQueryClient } from '@/features/app/query-client';
+import { ThemeSync } from '@/features/settings/theme-sync';
+import { cn } from '@/lib/utils';
 
 import { AppBootScreen, StorageErrorScreen } from './boot-screens';
 import { DesktopSidebar } from './desktop-sidebar';
 import { MobileTabBar } from './mobile-tab-bar';
+import { showsMonthSwitcher } from './navigation';
 import { QuickAddFab, QuickAddSheet } from './quick-add';
 
 /**
@@ -37,6 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <DataSourceProvider dataSource={boot.dataSource}>
+        <ThemeSync />
         <div className="flex min-h-dvh">
           <DesktopSidebar />
 
@@ -66,12 +71,24 @@ export function AppShell({ children }: { children: ReactNode }) {
  * Cabecalho fixo.
  *
  * O seletor de mes fica aqui, e nao dentro de cada pagina, porque o periodo
- * atravessa todas elas: trocar de mes em Transacoes e navegar para Cartoes
- * deve manter o mesmo recorte.
+ * atravessa as telas mensais: trocar de mes em Transacoes e ir para
+ * Planejamento mantem o mesmo recorte (o `?month=` segue na URL).
+ *
+ * Ele so aparece onde o mes muda o conteudo (`showsMonthSwitcher`). Nas
+ * demais telas, no desktop, o cabecalho inteiro some: sobraria uma faixa
+ * vazia. No celular ele fica, porque carrega a marca e o tema.
  */
 function AppHeader() {
+  const pathname = usePathname();
+  const withMonth = showsMonthSwitcher(pathname);
+
   return (
-    <header className="bg-background/85 sticky top-0 z-30 border-b backdrop-blur-xl">
+    <header
+      className={cn(
+        'bg-background/85 sticky top-0 z-30 border-b backdrop-blur-xl',
+        !withMonth && 'lg:hidden',
+      )}
+    >
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-2 px-4 lg:h-16 lg:px-8">
         <div className="flex items-center gap-2.5 lg:hidden">
           <div className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-[13px] font-semibold">
@@ -79,7 +96,7 @@ function AppHeader() {
           </div>
         </div>
 
-        <MonthSwitcher className="lg:-ml-2" />
+        {withMonth ? <MonthSwitcher className="lg:-ml-2" /> : null}
 
         <div className="lg:hidden">
           <ThemeToggle />

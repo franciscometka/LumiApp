@@ -54,11 +54,15 @@ describe('cenario do briefing', () => {
     expect(comPendencia.isOverLimit).toBe(true);
   });
 
-  it('mede a meta contra o saldo projetado', () => {
-    expect(p.projectedSavingsCents).toBe(49000);
-    expect(p.savingsPercentage).toBe(98);
-    expect(p.savingsDifferenceCents).toBe(-1000);
+  it('mede a meta contra a ECONOMIA DO MES, nao contra o saldo', () => {
+    // Lote 10: era 49000 (o saldo, que contava os R$ 100 da reserva).
+    // Economia = renda gerada 3.000 - gastos operacionais 2.610 = 390.
+    expect(p.projectedSavingsCents).toBe(39000);
+    expect(p.savingsPercentage).toBe(78);
+    expect(p.savingsDifferenceCents).toBe(-11000);
     expect(p.isGoalReached).toBe(false);
+    // O saldo de caixa continua 490: as duas grandezas coexistem.
+    expect(BRIEFING.balance).toBe(49000);
   });
 });
 

@@ -119,7 +119,7 @@ export class LocalDatabase {
     if (version === null) {
       throw new DataError(
         'corrupted_structure',
-        'Os dados salvos nao tem versao de schema reconhecivel.',
+        'Os dados salvos não têm versão de schema reconhecível.',
         { rawSnapshot: raw },
       );
     }
@@ -127,7 +127,7 @@ export class LocalDatabase {
     if (version > this.targetVersion) {
       throw new DataError(
         'unsupported_schema_version',
-        `Estes dados foram gravados por uma versao mais nova do Finan (schema ${version}, suportado ate ${this.targetVersion}). Atualize o aplicativo para abri-los.`,
+        `Estes dados foram gravados por uma versão mais nova do Finan (schema ${version}, suportado até ${this.targetVersion}). Atualize o aplicativo para abri-los.`,
         { rawSnapshot: raw },
       );
     }
@@ -153,7 +153,7 @@ export class LocalDatabase {
     if (!result.success) {
       throw new DataError(
         'corrupted_structure',
-        'Os dados salvos nao correspondem ao formato esperado. Nada foi alterado.',
+        'Os dados salvos não correspondem ao formato esperado. Nada foi alterado.',
         { rawSnapshot: raw, issues: this.collectIssues(migrated) },
       );
     }
@@ -352,17 +352,22 @@ export class LocalDatabase {
     return JSON.stringify(this.load(), null, 2);
   }
 
-  importJson(content: string): void {
-    const parsed = this.parseJson(content);
+  /**
+   * Valida um backup por inteiro, SEM gravar nada. E a mesma validacao que
+   * `importJson` usa — o que a tela de confirmacao mostra e exatamente o que
+   * seria gravado. Lanca `DataError` se o arquivo for invalido.
+   */
+  validateImport(content: string): PersistedDatabase {
+    const parsed = this.parseImportJson(content);
     const version = readSchemaVersion(parsed);
 
     if (version === null) {
-      throw new DataError('corrupted_structure', 'O arquivo nao tem versao de schema reconhecivel.');
+      throw new DataError('corrupted_structure', 'O arquivo não tem versão de schema reconhecível.');
     }
     if (version > this.targetVersion) {
       throw new DataError(
         'unsupported_schema_version',
-        `O arquivo foi gerado por uma versao mais nova do Finan (schema ${version}).`,
+        `O arquivo foi gerado por uma versão mais nova do Finan (schema ${version}).`,
       );
     }
 
@@ -372,23 +377,80 @@ export class LocalDatabase {
     if (!result.success) {
       throw new DataError(
         'corrupted_structure',
-        'O arquivo nao corresponde ao formato esperado. Nada foi importado.',
+        'O arquivo não corresponde ao formato esperado. Nada foi importado.',
         { issues: this.collectIssues(migrated) },
       );
     }
 
-    this.persist(result.data);
-    this.cache = result.data;
+    return result.data;
   }
 
-  /** Unica operacao destrutiva da camada. Chamada so com confirmacao explicita. */
+  /**
+   * Substitui todo o conteudo. Tudo ou nada: a validacao completa acontece
+   * antes da unica escrita, e um arquivo invalido nao toca no banco atual.
+   */
+  importJson(content: string): void {
+    const valid = this.validateImport(content);
+    this.persist(valid);
+    this.cache = valid;
+  }
+
+  /**
+   * Apaga os DADOS FINANCEIROS: transacoes, planos, cartoes, dividas e
+   * recorrencias, inclusive as linhas ja excluidas logicamente.
+   *
+   * Mantem de proposito:
+   * - as categorias: sem elas nao da para lancar nada, e o app ficaria
+   *   inutilizavel ate um reseed;
+   * - as preferencias;
+   * - o marcador `seededAt`. Antes do Lote 10 o reset removia a chave
+   *   inteira, e na abertura seguinte o seed via um banco vazio e trazia os
+   *   dados de demonstracao de volta — o app desfazendo o que a pessoa pediu.
+   *
+   * Se o storage estiver ilegivel, nao ha o que preservar: remove a chave, e
+   * a abertura seguinte parte do zero. E o caminho de recuperacao.
+   *
+   * Unica operacao destrutiva da camada. Chamada so com confirmacao explicita.
+   */
   reset(): void {
-    this.driver.remove(this.key);
-    this.cache = null;
+    let current: PersistedDatabase;
+    try {
+      current = this.load();
+    } catch {
+      this.driver.remove(this.key);
+      this.cache = null;
+      return;
+    }
+
+    const now = this.now();
+    const next: PersistedDatabase = {
+      ...current,
+      meta: { ...current.meta, updatedAt: now, seededAt: current.meta.seededAt ?? now },
+      collections: { ...createEmptyCollections(), categories: current.collections.categories },
+    };
+
+    this.persist(next);
+    this.cache = next;
   }
 
   private persist(database: PersistedDatabase): void {
     this.driver.write(this.key, JSON.stringify(database));
+  }
+
+  /** Mesma leitura de `parseJson`, com mensagens sobre o ARQUIVO importado. */
+  private parseImportJson(raw: string): RawDatabase {
+    try {
+      return this.parseJson(raw);
+    } catch (cause) {
+      if (!isDataError(cause)) throw cause;
+      throw new DataError(
+        cause.code,
+        cause.code === 'corrupted_json'
+          ? 'O arquivo não é um JSON válido. Nada foi importado.'
+          : 'O arquivo não tem o formato de um backup do Finan. Nada foi importado.',
+        { cause },
+      );
+    }
   }
 
   private parseJson(raw: string): RawDatabase {
@@ -398,7 +460,7 @@ export class LocalDatabase {
     } catch (cause) {
       throw new DataError(
         'corrupted_json',
-        'Os dados salvos nao sao um JSON valido. Nada foi alterado.',
+        'Os dados salvos não são um JSON válido. Nada foi alterado.',
         { rawSnapshot: raw, cause },
       );
     }
@@ -407,7 +469,7 @@ export class LocalDatabase {
     if (record === null) {
       throw new DataError(
         'corrupted_structure',
-        'Os dados salvos nao sao um objeto. Nada foi alterado.',
+        'Os dados salvos não são um objeto. Nada foi alterado.',
         { rawSnapshot: raw },
       );
     }

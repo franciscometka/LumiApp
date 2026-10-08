@@ -79,3 +79,51 @@ export function nextClosingDate(card: Card, reference: PlainDate): PlainDate {
   const thisMonth = makePlainDateClamped(year, month, card.closingDay);
   return isAfter(reference, thisMonth) ? addMonths(thisMonth, 1) : thisMonth;
 }
+
+/**
+ * Forma comparavel de um nome de cartao: sem acento, sem diferenca de caixa,
+ * sem espacos nas pontas e com espacos internos repetidos reduzidos a um.
+ * "Nubank", "nubank", "NÚBANK" e "  Nu   bank " -> "nubank" / "nu bank".
+ *
+ * So serve para COMPARAR. O nome gravado continua como a pessoa digitou.
+ */
+export function normalizeCardName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase('pt-BR')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Cartao ATIVO que ja usa este nome, ou `null`.
+ *
+ * Dois "Nubank" ficam indistinguiveis no seletor de vinculo de uma transacao.
+ * Ativo = nao excluido e nao arquivado, o mesmo criterio de quem aparece para
+ * novos vinculos. Um cartao excluido nao bloqueia o nome; o proprio cartao em
+ * edicao (`exceptId`) nao conflita consigo.
+ */
+export function findCardNameConflict(
+  name: string,
+  cards: readonly Card[],
+  exceptId?: string,
+): Card | null {
+  const target = normalizeCardName(name);
+  if (target === '') return null;
+
+  return (
+    cards.find(
+      (card) =>
+        card.id !== exceptId &&
+        card.deletedAt === undefined &&
+        card.archivedAt === undefined &&
+        normalizeCardName(card.name) === target,
+    ) ?? null
+  );
+}
+
+/** Mensagem unica para formulario e gravacao. */
+export function cardNameConflictMessage(existing: Card): string {
+  return `Já existe um cartão chamado "${existing.name}". Use outro nome.`;
+}

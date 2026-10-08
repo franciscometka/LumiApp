@@ -34,6 +34,9 @@ export const queryKeys = {
    */
   transactionsByMonth: (month: MonthKey) => [...queryKeys.transactions(), 'month', month] as const,
 
+  /** Preferencias (dia do salario, tema). Um registro so por usuario. */
+  settings: () => [...queryKeys.all, 'settings'] as const,
+
   /** Categorias mudam raramente e o formulario depende delas. */
   categories: () => [...queryKeys.all, 'categories'] as const,
 

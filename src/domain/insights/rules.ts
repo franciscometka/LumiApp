@@ -121,7 +121,8 @@ const cardShare: InsightRule = {
 const expenseComparison: InsightRule = {
   id: 'expense-comparison',
   evaluate({ snapshot }) {
-    const { expense, hasPreviousData } = snapshot.comparison;
+    // Gastos OPERACIONAIS: guardar na reserva nao e "gastar a mais".
+    const { operationalExpense: expense, hasPreviousData } = snapshot.comparison;
     // Sem mes anterior nao ha comparacao; "+100%" a partir do zero e invencao.
     if (!hasPreviousData || expense.changePercentage === null) return null;
 

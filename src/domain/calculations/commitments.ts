@@ -50,6 +50,7 @@ export interface CommitmentBreakdown {
   readonly debtPercentage: number | null;
   readonly committedPercentage: number | null;
 
+  /** Gastos OPERACIONAIS do recorte. Transferencias nao entram. */
   readonly totalExpenseCents: Money;
 }
 
@@ -76,6 +77,9 @@ export function calculateCommitments(
 
   for (const transaction of transactions) {
     if (transaction.type !== 'expense') continue;
+    // "Seus cartoes representam X% dos gastos": o denominador e consumo.
+    // Guardar na reserva inflava o total e encolhia esse percentual.
+    if (transaction.flow === 'transfer') continue;
 
     // Um `switch` exaustivo sobre um rotulo unico: nao existe caminho em que
     // o mesmo valor caia em duas listas.

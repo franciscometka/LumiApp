@@ -50,7 +50,9 @@ describe('calculateCategoryBreakdown', () => {
   it('calcula a distribuicao de entradas quando pedido', () => {
     const distribuicao = calculateCategoryBreakdown(briefingScenario(), { type: 'income' });
 
-    expect(distribuicao.totalCents).toBe(310000);
+    // Lote 10: era 310000. Os R$ 100 vindos da reserva nao sao renda e nao
+    // entram na distribuicao por categoria.
+    expect(distribuicao.totalCents).toBe(300000);
     expect(distribuicao.largest?.categoryId).toBe('cat-salario');
   });
 

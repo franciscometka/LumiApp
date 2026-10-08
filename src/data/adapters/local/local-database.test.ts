@@ -357,13 +357,39 @@ describe('recuperacao', () => {
     expect(database.recover().database.meta.seededAt).toBe(NOW);
   });
 
-  it('reset e a unica operacao destrutiva, e so quando chamada', () => {
-    const { driver, database } = makeDatabase(documentWithTransactions());
+  it('reset apaga os dados financeiros e mantem categorias, preferencias e o marcador do seed', () => {
+    // Categorias preservadas ficam provadas no teste do seed, com dados reais.
+    const base = createEmptyDatabase(NOW);
+    const { driver, database } = makeDatabase(
+      JSON.stringify({
+        ...JSON.parse(documentWithTransactions()),
+        meta: { ...base.meta, seededAt: NOW },
+      }),
+    );
 
+    expect(database.load().collections.transactions.length).toBeGreaterThan(0);
+    database.reset();
+
+    const depois = database.load();
     expect(driver.read(KEY)).not.toBeNull();
+    expect(depois.collections.transactions).toEqual([]);
+    expect(depois.collections.cards).toEqual([]);
+    expect(depois.collections.debts).toEqual([]);
+    expect(depois.collections.recurringBills).toEqual([]);
+    expect(depois.collections.monthlyPlans).toEqual([]);
+    expect(depois.meta.seededAt).toBe(NOW);
+  });
+
+  it('reset sem marcador de seed grava o marcador: o demo nao volta', () => {
+    const { database } = makeDatabase(documentWithTransactions());
+    database.reset();
+    expect(database.load().meta.seededAt).toBeDefined();
+  });
+
+  it('reset com storage ilegivel remove a chave, para o app poder recomecar', () => {
+    const { driver, database } = makeDatabase('{ lixo');
     database.reset();
     expect(driver.read(KEY)).toBeNull();
-    expect(database.status().state).toBe('empty');
   });
 });
 

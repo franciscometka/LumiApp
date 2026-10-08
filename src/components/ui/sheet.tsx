@@ -9,6 +9,17 @@ import { cn } from '@/lib/utils';
 /**
  * Painel deslizante. No mobile sobe de baixo, que e onde o polegar alcanca;
  * no desktop vem da direita.
+ *
+ * ## Animacao
+ *
+ * Vive em `globals.css`, presa a `data-slot`, `data-side` e ao
+ * `data-state` que o Radix ja emite. Antes, este arquivo usava classes como
+ * `animate-in` e `slide-in-from-bottom`, que vem de um plugin que o projeto
+ * nunca instalou — nao existiam, e o painel aparecia e sumia seco.
+ *
+ * Keyframes, e nao `transition`: o Radix so adia a desmontagem do painel
+ * enquanto ha uma ANIMACAO rodando (`animationend`). Com transicao, o
+ * fechamento seria instantaneo.
  */
 
 const Sheet = SheetPrimitive.Root;
@@ -22,8 +33,6 @@ function SheetOverlay({ className, ...props }: ComponentProps<typeof SheetPrimit
       data-slot="sheet-overlay"
       className={cn(
         'fixed inset-0 z-50 bg-black/55 backdrop-blur-[2px]',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
         className,
       )}
       {...props}
@@ -44,14 +53,13 @@ function SheetContent({
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        data-side={side}
         className={cn(
-          'bg-card fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out',
-          'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:duration-300 data-[state=closed]:duration-200',
+          'bg-card fixed z-50 flex flex-col gap-4 shadow-lg',
           side === 'bottom' &&
             cn(
               'inset-x-0 bottom-0 max-h-[88dvh] rounded-t-2xl border-t p-5',
               'pb-[max(1.25rem,env(safe-area-inset-bottom))]',
-              'data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
             ),
           /**
            * Painel que sobe no celular e vira modal centrado no desktop.
@@ -71,10 +79,7 @@ function SheetContent({
               'sm:rounded-2xl sm:border sm:p-6',
             ),
           side === 'right' &&
-            cn(
-              'inset-y-0 right-0 h-full w-full max-w-sm border-l p-6',
-              'data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
-            ),
+            'inset-y-0 right-0 h-full w-full max-w-sm border-l p-6',
           className,
         )}
         {...props}

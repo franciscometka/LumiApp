@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { makeExpense, makeIncome, makeTransaction } from '../__testing__/factories';
+import { date, makeExpense, makeIncome, makeTransaction } from '../__testing__/factories';
 
-import { countInGroups, groupByDay } from './grouping';
+import { countInGroups, groupByDay, splitByToday } from './grouping';
 
 describe('groupByDay', () => {
   it('agrupa por data e ordena do dia mais recente para o mais antigo', () => {
@@ -119,5 +119,65 @@ describe('groupByDay', () => {
     ]);
 
     expect(groups.map((group) => group.date)).toEqual(['2026-10-01', '2026-09-30']);
+  });
+});
+
+describe('splitByToday', () => {
+  const hoje = date('2026-10-08');
+  const grupos = groupByDay([
+    makeExpense({ date: '2026-10-31', description: 'Academia' }),
+    makeExpense({ date: '2026-10-08', description: 'Mercado' }),
+    makeExpense({ date: '2026-10-18', description: 'Cartao Inter' }),
+    makeExpense({ date: '2026-10-05', description: 'Farmacia' }),
+    makeExpense({ date: '2026-10-28', description: 'Cartao Magalu' }),
+    makeExpense({ date: '2026-10-07', description: 'Padaria' }),
+  ]);
+
+  it('extrato ate hoje, do mais recente ao mais antigo', () => {
+    expect(splitByToday(grupos, hoje).recorded.map((g) => g.date)).toEqual([
+      '2026-10-08',
+      '2026-10-07',
+      '2026-10-05',
+    ]);
+  });
+
+  it('proximos depois de hoje, em ordem de chegada', () => {
+    expect(splitByToday(grupos, hoje).upcoming.map((g) => g.date)).toEqual([
+      '2026-10-18',
+      '2026-10-28',
+      '2026-10-31',
+    ]);
+  });
+
+  it('hoje pertence ao extrato, nao aos proximos', () => {
+    const { recorded, upcoming } = splitByToday(grupos, hoje);
+    expect(recorded.some((g) => g.date === hoje)).toBe(true);
+    expect(upcoming.some((g) => g.date === hoje)).toBe(false);
+  });
+
+  it('nao perde nem duplica nenhum dia', () => {
+    const { recorded, upcoming } = splitByToday(grupos, hoje);
+    expect(recorded.length + upcoming.length).toBe(grupos.length);
+  });
+
+  it('mes encerrado: tudo e extrato', () => {
+    expect(splitByToday(grupos, date('2026-11-02')).upcoming).toEqual([]);
+  });
+
+  it('mes futuro: tudo e proximo, em ordem crescente', () => {
+    const { recorded, upcoming } = splitByToday(grupos, date('2026-09-30'));
+    expect(recorded).toEqual([]);
+    expect(upcoming[0]?.date).toBe('2026-10-05');
+    expect(upcoming.at(-1)?.date).toBe('2026-10-31');
+  });
+
+  it('atravessa a virada do mes: amanha no mes seguinte e proximo', () => {
+    const virada = groupByDay([
+      makeExpense({ date: '2026-10-31' }),
+      makeExpense({ date: '2026-11-01' }),
+    ]);
+    const { recorded, upcoming } = splitByToday(virada, date('2026-10-31'));
+    expect(recorded.map((g) => g.date)).toEqual(['2026-10-31']);
+    expect(upcoming.map((g) => g.date)).toEqual(['2026-11-01']);
   });
 });

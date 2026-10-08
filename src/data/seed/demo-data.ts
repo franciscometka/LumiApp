@@ -194,7 +194,7 @@ export function buildSeedData({ userId, month, now }: SeedOptions): SeedData {
       //
       // Com os campos ausentes, o app diz honestamente que nao sabe e
       // convida a completar o cadastro.
-      notes: 'Parcela mensal conhecida. Prazo ainda nao informado.',
+      notes: 'Parcela mensal conhecida. Prazo ainda não informado.',
     }),
   ];
 

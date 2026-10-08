@@ -3,7 +3,7 @@
 import { ArrowDownLeft, ArrowUpRight, Clock, Repeat } from 'lucide-react';
 
 import { MoneyText } from '@/components/finan/money-text';
-import type { DayGroup } from '@/domain/calculations/grouping';
+import type { DayGroup, DayTimeline } from '@/domain/calculations/grouping';
 import type { Category } from '@/domain/entities/category';
 import type { Transaction } from '@/domain/entities/transaction';
 import { isIncome, statusLabel } from '@/domain/entities/transaction';
@@ -24,14 +24,15 @@ import { cn } from '@/lib/utils';
  * verde e o vermelho le o sinal; quem usa leitor de tela ouve o rotulo.
  */
 export function TransactionList({
-  groups,
+  timeline,
   today,
   categoriesById,
   onSelect,
   onToggleStatus,
   pendingStatusId,
 }: {
-  groups: readonly DayGroup[];
+  /** Extrato e proximos, ja separados e ordenados pelo dominio. */
+  timeline: DayTimeline;
   today: PlainDate;
   categoriesById: ReadonlyMap<ID, Category>;
   onSelect: (transaction: Transaction) => void;
@@ -39,39 +40,74 @@ export function TransactionList({
   /** Id cuja alternancia de status esta em voo, para travar o botao. */
   pendingStatusId: ID | null;
 }) {
+  const rowProps = { today, categoriesById, onSelect, onToggleStatus, pendingStatusId };
+
   return (
     <div className="flex flex-col gap-6">
-      {groups.map((group) => (
-        <section key={group.date}>
-          <header className="flex items-baseline justify-between gap-3 px-1 pb-2">
-            <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase first-letter:uppercase">
-              {formatRelativeDay(group.date, today)}
-            </h3>
-            {/*
-              Saldo do dia so aparece quando ha os dois lados: num dia de
-              gastos apenas, repetir a soma logo abaixo das parcelas nao
-              informa nada novo.
-            */}
-            {group.incomeCents > 0 && group.expenseCents > 0 ? (
-              <MoneyText value={group.netCents} size="sm" tone="signed" showSign />
-            ) : null}
-          </header>
-
-          <ul className="bg-card divide-border/70 divide-y overflow-hidden rounded-xl border">
-            {group.transactions.map((transaction) => (
-              <TransactionRow
-                key={transaction.id}
-                transaction={transaction}
-                categoryName={categoriesById.get(transaction.categoryId)?.name ?? null}
-                onSelect={onSelect}
-                onToggleStatus={onToggleStatus}
-                isTogglingStatus={pendingStatusId === transaction.id}
-              />
-            ))}
-          </ul>
-        </section>
+      {timeline.recorded.map((group) => (
+        <DaySection key={group.date} group={group} {...rowProps} />
       ))}
+
+      {/*
+        O que ainda vai acontecer vem DEPOIS do extrato, em ordem de chegada.
+        Num mes futuro so existe este bloco, e o titulo continua verdadeiro.
+      */}
+      {timeline.upcoming.length === 0 ? null : (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-foreground border-t px-1 pt-5 text-sm font-semibold">Próximos</h2>
+          {timeline.upcoming.map((group) => (
+            <DaySection key={group.date} group={group} {...rowProps} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function DaySection({
+  group,
+  today,
+  categoriesById,
+  onSelect,
+  onToggleStatus,
+  pendingStatusId,
+}: {
+  group: DayGroup;
+  today: PlainDate;
+  categoriesById: ReadonlyMap<ID, Category>;
+  onSelect: (transaction: Transaction) => void;
+  onToggleStatus: (transaction: Transaction) => void;
+  pendingStatusId: ID | null;
+}) {
+  return (
+    <section>
+      <header className="flex items-baseline justify-between gap-3 px-1 pb-2">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase first-letter:uppercase">
+          {formatRelativeDay(group.date, today)}
+        </h3>
+        {/*
+          Saldo do dia so aparece quando ha os dois lados: num dia de
+          gastos apenas, repetir a soma logo abaixo das parcelas nao
+          informa nada novo.
+        */}
+        {group.incomeCents > 0 && group.expenseCents > 0 ? (
+          <MoneyText value={group.netCents} size="sm" tone="signed" showSign />
+        ) : null}
+      </header>
+
+      <ul className="bg-card divide-border/70 divide-y overflow-hidden rounded-xl border">
+        {group.transactions.map((transaction) => (
+          <TransactionRow
+            key={transaction.id}
+            transaction={transaction}
+            categoryName={categoriesById.get(transaction.categoryId)?.name ?? null}
+            onSelect={onSelect}
+            onToggleStatus={onToggleStatus}
+            isTogglingStatus={pendingStatusId === transaction.id}
+          />
+        ))}
+      </ul>
+    </section>
   );
 }
 

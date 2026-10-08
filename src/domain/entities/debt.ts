@@ -62,7 +62,7 @@ export const debtSchema = z
       debt.paidInstallments === undefined ||
       debt.paidInstallments <= debt.totalInstallments,
     {
-      message: 'Parcelas pagas nao podem exceder o total',
+      message: 'Parcelas pagas não podem exceder o total',
       path: ['paidInstallments'],
     },
   );

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { PRIMARY_DESTINATIONS, isDestinationActive, tabLabel } from './navigation';
+import {
+  MORE_ROUTES,
+  PRIMARY_DESTINATIONS,
+  isDestinationActive,
+  showsMonthSwitcher,
+  tabLabel,
+} from './navigation';
 
 describe('destinos principais', () => {
   it('traz os cinco do briefing, na ordem', () => {
@@ -75,5 +81,45 @@ describe('isDestinationActive', () => {
       const ativos = PRIMARY_DESTINATIONS.filter((item) => isDestinationActive(item, pathname));
       expect(ativos).toHaveLength(1);
     }
+  });
+});
+
+describe('Mais acende nas telas que pertencem a ele', () => {
+  const mais = PRIMARY_DESTINATIONS[4]!;
+
+  it('acende em /mais e em todas as subtelas, mesmo em rota propria', () => {
+    for (const pathname of ['/mais', '/dividas', '/recorrentes', '/historico', '/ajustes']) {
+      expect(isDestinationActive(mais, pathname), pathname).toBe(true);
+    }
+  });
+
+  it('nao acende por prefixo parcial', () => {
+    expect(isDestinationActive(mais, '/dividas-antigas')).toBe(false);
+    expect(isDestinationActive(mais, '/historicos')).toBe(false);
+  });
+
+  it('cada subtela acende exatamente um destino', () => {
+    for (const pathname of MORE_ROUTES) {
+      const ativos = PRIMARY_DESTINATIONS.filter((item) => isDestinationActive(item, pathname));
+      expect(ativos.map((item) => item.label), pathname).toEqual(['Mais']);
+    }
+  });
+});
+
+describe('showsMonthSwitcher', () => {
+  it('aparece onde o mes muda o conteudo', () => {
+    for (const pathname of ['/', '/transacoes', '/planejamento']) {
+      expect(showsMonthSwitcher(pathname), pathname).toBe(true);
+    }
+  });
+
+  it('some onde o mes nao muda nada', () => {
+    for (const pathname of ['/cartoes', '/cartoes/1', '/dividas', '/recorrentes', '/historico', '/mais', '/ajustes']) {
+      expect(showsMonthSwitcher(pathname), pathname).toBe(false);
+    }
+  });
+
+  it('a raiz nao vale como prefixo de tudo', () => {
+    expect(showsMonthSwitcher('/qualquer')).toBe(false);
   });
 });

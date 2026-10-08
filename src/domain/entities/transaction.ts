@@ -48,16 +48,16 @@ export const FLOW_NATURES = ['operational', 'transfer'] as const;
 export type FlowNature = (typeof FLOW_NATURES)[number];
 
 export const FLOW_NATURE_LABELS: Record<FlowNature, string> = {
-  operational: 'Movimento do mes',
-  transfer: 'Transferencia',
+  operational: 'Movimento do mês',
+  transfer: 'Transferência',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   pix: 'Pix',
-  debit: 'Debito',
-  credit: 'Credito',
+  debit: 'Débito',
+  credit: 'Crédito',
   cash: 'Dinheiro',
-  transfer: 'Transferencia',
+  transfer: 'Transferência',
   boleto: 'Boleto',
   other: 'Outro',
 };

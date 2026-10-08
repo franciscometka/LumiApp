@@ -1,0 +1,58 @@
+# Os mesmos quatro portoes que fecham cada lote localmente, agora em cada push
+# e pull request para master. Um clone limpo, `npm ci` e a versao de Node do
+# projeto — o que passa aqui passa em qualquer PC que siga o README.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Um push novo cancela a execucao anterior do mesmo ramo: so o ultimo commit
+# importa.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Os testes de data assumem um fuso a oeste de Greenwich: e nele que um
+      # retorno acidental a `Date` erraria o dia. O vitest.config tambem fixa
+      # isto; repetir aqui garante o fuso desde o inicio do processo.
+      TZ: America/Sao_Paulo
+      NEXT_TELEMETRY_DISABLED: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # `npm audit` NAO e portao: os 5 alertas conhecidos vem da cadeia do
+      # ESLint (desenvolvimento) e nao tem correcao compativel. Ver README.

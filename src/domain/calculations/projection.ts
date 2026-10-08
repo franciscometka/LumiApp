@@ -88,7 +88,16 @@ export function calculateProjection({
   const elapsedDays = elapsedDaysInPeriod(period, today);
   const remainingDays = remainingDaysInPeriod(period, today);
 
-  const expenses = transactions.filter((transaction) => transaction.type === 'expense');
+  /**
+   * So gasto OPERACIONAL mede ritmo de consumo. Guardar R$ 500 na reserva no
+   * dia 8 nao e "R$ 62 por dia" de gasto — antes do Lote 10 era, e a projecao
+   * anunciava mais de R$ 1.400 de consumo que nunca aconteceria. A
+   * transferencia continua no caixa: `projectedExpenseCents` parte de
+   * `totals.expense`, porque a projecao e de saldo.
+   */
+  const expenses = transactions.filter(
+    (transaction) => transaction.type === 'expense' && transaction.flow === 'operational',
+  );
 
   const fixedExpenseCents = sumMoney(
     expenses.filter(isFixedCommitment).map((transaction) => transaction.amountCents),

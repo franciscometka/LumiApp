@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { MoneyText } from '@/components/finan/money-text';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useSheetSession } from '@/components/ui/sheet-session';
 import type { PlanProgress } from '@/domain/calculations/plan-progress';
 import type { PeriodTemporality } from '@/domain/shared/period';
 import { absMoney } from '@/domain/shared/money';
@@ -50,6 +51,8 @@ export function PlanningView() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
+  // Formulario limpo a cada abertura e saida animada.
+  const planSheet = useSheetSession(isEditing ? true : null);
 
   const plan = planQuery.data ?? null;
   const snapshot = snapshotQuery.data?.snapshot;
@@ -151,9 +154,10 @@ export function PlanningView() {
         </>
       )}
 
-      {isEditing ? (
+      {planSheet.value === null ? null : (
         <PlanFormSheet
-          open
+          key={planSheet.key}
+          open={planSheet.open}
           onOpenChange={(open) => {
             if (!open) {
               setIsEditing(false);
@@ -168,7 +172,7 @@ export function PlanningView() {
           saveError={saveError}
           onSubmit={handleSave}
         />
-      ) : null}
+      )}
 
       <ConfirmDialog
         open={pendingDelete}
@@ -290,7 +294,11 @@ function SpendingBlock({
 }) {
   return (
     <div>
-      <GoalRow label="Gastos" percentage={progress.spendingPercentage}>
+      <GoalRow
+        label="Gastos operacionais"
+        hint="Guardar na reserva não consome o limite."
+        percentage={progress.spendingPercentage}
+      >
         <span>
           <MoneyText value={progress.committedSpendingCents} size="sm" /> de{' '}
           <MoneyText value={progress.spendingLimitCents} size="sm" className="text-muted-foreground" />
@@ -329,7 +337,13 @@ function SavingsBlock({
 
   return (
     <div>
-      <GoalRow label="Meta de economia" percentage={progress.savingsPercentage}>
+      {/* "Economia do mês", nao "saldo": transferencias ficam fora dos dois
+          lados. O saldo de caixa e o do Inicio. */}
+      <GoalRow
+        label="Economia do mês"
+        hint="Renda gerada menos gastos operacionais."
+        percentage={progress.savingsPercentage}
+      >
         <span>
           <MoneyText value={progress.projectedSavingsCents} size="sm" tone="signed" /> de{' '}
           <MoneyText value={progress.savingsGoalCents} size="sm" className="text-muted-foreground" />
@@ -360,7 +374,11 @@ function SavingsBlock({
 function IncomeBlock({ progress }: { progress: PlanProgress }) {
   return (
     <div>
-      <GoalRow label="Renda" percentage={progress.incomePercentage}>
+      <GoalRow
+        label="Renda gerada"
+        hint="Dinheiro vindo da reserva não conta."
+        percentage={progress.incomePercentage}
+      >
         <span>
           <MoneyText value={progress.earnedIncomeCents} size="sm" /> de{' '}
           <MoneyText value={progress.expectedIncomeCents} size="sm" className="text-muted-foreground" />

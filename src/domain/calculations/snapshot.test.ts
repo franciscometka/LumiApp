@@ -65,18 +65,20 @@ describe('buildSnapshot', () => {
       today: date('2026-10-20'),
     });
 
-    expect(snapshot.comparison.expense.previous).toBe(230000);
-    expect(snapshot.comparison.expense.deltaCents).toBe(31000);
+    expect(snapshot.comparison.operationalExpense.previous).toBe(230000);
+    expect(snapshot.comparison.operationalExpense.deltaCents).toBe(31000);
     expect(snapshot.comparison.hasPreviousData).toBe(true);
   });
 
   it('todas as metricas falam do mesmo recorte', () => {
     const snapshot = snapshotPadrao();
 
-    expect(snapshot.totals.expense).toBe(snapshot.commitments.totalExpenseCents);
-    expect(snapshot.totals.expense).toBe(snapshot.expenseByCategory.totalCents);
-    expect(snapshot.totals.income).toBe(snapshot.incomeByCategory.totalCents);
-    expect(snapshot.plan.committedSpendingCents).toBe(snapshot.totals.expense);
+    // Distribuicoes, compromissos e plano falam de atividade OPERACIONAL; o
+    // briefing tem R$ 100 vindos da reserva, que nao entram em nenhum deles.
+    expect(snapshot.totals.operationalExpense).toBe(snapshot.commitments.totalExpenseCents);
+    expect(snapshot.totals.operationalExpense).toBe(snapshot.expenseByCategory.totalCents);
+    expect(snapshot.totals.earnedIncome).toBe(snapshot.incomeByCategory.totalCents);
+    expect(snapshot.plan.committedSpendingCents).toBe(snapshot.totals.operationalExpense);
   });
 
   it('nao quebra em periodo totalmente vazio', () => {
@@ -129,7 +131,7 @@ describe('buildSnapshot', () => {
       today: date('2026-10-20'),
     });
 
-    expect(snapshot.comparison.expense.previous).toBe(555000);
+    expect(snapshot.comparison.operationalExpense.previous).toBe(555000);
   });
 
   it('atravessa a virada de ano ao buscar o periodo anterior', () => {
@@ -144,6 +146,6 @@ describe('buildSnapshot', () => {
       today: date('2027-01-20'),
     });
 
-    expect(snapshot.comparison.expense.previous).toBe(200000);
+    expect(snapshot.comparison.operationalExpense.previous).toBe(200000);
   });
 });

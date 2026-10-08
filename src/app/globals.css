@@ -215,6 +215,78 @@
   }
 }
 
+/* ============================================================================
+   Sheets — entrada e saida
+   ----------------------------------------------------------------------------
+   Curtas e funcionais: o painel vem de onde ele mora e volta para la.
+   - celular: sobe de baixo;
+   - desktop, modo `responsive`: modal centrado, surge com leve escala;
+   - lateral: vem da direita.
+   Animam `transform`/`opacity`. O centramento do modal usa a propriedade
+   `translate` do Tailwind 4, que e independente de `transform` — por isso
+   a animacao nao desloca o modal do centro.
+   Movimento reduzido: a regra global abaixo zera as duracoes; o Radix ainda
+   recebe `animationend` e desmonta normalmente.
+   ========================================================================== */
+
+@keyframes sheet-fade-in {
+  from { opacity: 0; }
+}
+@keyframes sheet-fade-out {
+  to { opacity: 0; }
+}
+@keyframes sheet-up-in {
+  from { transform: translateY(100%); }
+}
+@keyframes sheet-down-out {
+  to { transform: translateY(100%); }
+}
+@keyframes sheet-right-in {
+  from { transform: translateX(100%); }
+}
+@keyframes sheet-right-out {
+  to { transform: translateX(100%); }
+}
+@keyframes sheet-pop-in {
+  from { opacity: 0; transform: scale(0.97); }
+}
+@keyframes sheet-pop-out {
+  to { opacity: 0; transform: scale(0.97); }
+}
+
+[data-slot='sheet-overlay'][data-state='open'] {
+  animation: sheet-fade-in 200ms ease-out;
+}
+[data-slot='sheet-overlay'][data-state='closed'] {
+  animation: sheet-fade-out 160ms ease-in forwards;
+}
+
+[data-slot='sheet-content'][data-side='bottom'][data-state='open'],
+[data-slot='sheet-content'][data-side='responsive'][data-state='open'] {
+  animation: sheet-up-in 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+[data-slot='sheet-content'][data-side='bottom'][data-state='closed'],
+[data-slot='sheet-content'][data-side='responsive'][data-state='closed'] {
+  animation: sheet-down-out 200ms ease-in forwards;
+}
+
+[data-slot='sheet-content'][data-side='right'][data-state='open'] {
+  animation: sheet-right-in 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+[data-slot='sheet-content'][data-side='right'][data-state='closed'] {
+  animation: sheet-right-out 200ms ease-in forwards;
+}
+
+/* `sm` do Tailwind: a partir daqui o modo responsivo e modal centrado. */
+@media (min-width: 40rem) {
+  [data-slot='sheet-content'][data-side='responsive'][data-state='open'] {
+    animation: sheet-pop-in 200ms ease-out;
+  }
+  [data-slot='sheet-content'][data-side='responsive'][data-state='closed'] {
+    animation: sheet-pop-out 150ms ease-in forwards;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -116,7 +116,7 @@ export function runMigrations(
     if (migration === undefined) {
       throw new DataError(
         'migration_failed',
-        `Nao existe migracao da versao ${version} para ${targetVersion}. Os dados foram preservados.`,
+        `Não existe migração da versão ${version} para ${targetVersion}. Os dados foram preservados.`,
       );
     }
 
