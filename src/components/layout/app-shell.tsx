@@ -93,7 +93,7 @@ function AppHeader() {
     >
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-2 px-4 lg:h-16 lg:px-8">
         <div className="flex items-center lg:hidden">
-          <BrandMark size={28} title={BRAND_NAME} className="text-foreground" />
+          <BrandMark size={32} title={BRAND_NAME} className="text-foreground" />
         </div>
 
         {withMonth ? <MonthSwitcher className="lg:-ml-2" /> : null}

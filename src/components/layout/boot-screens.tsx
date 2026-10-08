@@ -19,7 +19,7 @@ import { retryInitialization } from '@/features/app/data-source-store';
 export function AppBootScreen() {
   return (
     <div className="flex min-h-dvh items-center justify-center p-6" role="status" aria-live="polite">
-      <BrandLogo height={36} className="text-foreground opacity-60" />
+      <BrandLogo size={44} className="text-foreground opacity-60" />
       <span className="sr-only">Carregando seus dados</span>
     </div>
   );

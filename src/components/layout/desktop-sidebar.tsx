@@ -26,11 +26,13 @@ export function DesktopSidebar() {
 
   return (
     <aside className="bg-background hidden w-60 shrink-0 flex-col border-r lg:flex">
-      <div className="flex items-center px-5 py-5">
-        <BrandLogo height={30} className="text-foreground" />
+      {/* h-16: mesma altura da barra superior, o logo fica no eixo do seletor
+          de mes. px-6: a tinta do simbolo alinha com os icones da navegacao. */}
+      <div className="flex h-16 items-center px-6">
+        <BrandLogo size={36} className="text-foreground" />
       </div>
 
-      <div className="px-3 pb-3">
+      <div className="px-3 pt-3 pb-3">
         <Button onClick={openQuickAdd} className="w-full justify-start gap-2">
           <Plus />
           Nova transação

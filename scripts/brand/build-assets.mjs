@@ -190,6 +190,13 @@ for (const [name, content] of Object.entries(files)) writeFileSync(join(out, nam
 
 // Geometria para os componentes React (BrandMark/BrandLogo): so formas, sem
 // cor — no app a cor vem do tema, via `currentColor` e `fill-primary`.
+const wordTight = {
+  x: Math.floor(wordmark.box.minX),
+  y: Math.floor(wordTop),
+  width: Math.ceil(wordRight - Math.floor(wordmark.box.minX)),
+  height: Math.ceil(wordmark.box.maxY - Math.floor(wordTop)),
+};
+const wordTightViewBox = [wordTight.x, wordTight.y, wordTight.width, wordTight.height].join(' ');
 /** String TS com aspas simples, no estilo do projeto. */
 const q = (value) => `'${value}'`;
 const lockupTransform = `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(5)})`;
@@ -214,6 +221,14 @@ export const LOCKUP_MARK_TRANSFORM = ${q(lockupTransform)};
 export const WORDMARK_PATH =
   ${q(wordmark.d)};
 export const WORDMARK_DOT = { cx: ${dot.cx}, cy: ${dot.cy}, r: ${dot.r} } as const;
+/**
+ * Caixa justa do wordmark sozinho (letras + pingo), para compor o logo com
+ * tamanho e espaco escolhidos no app. o "cap" e o topo das maiusculas e a linha
+ * de base: o alinhamento optico usa o bloco das letras, nao a caixa.
+ */
+export const WORDMARK_VIEW_BOX = ${q(wordTightViewBox)};
+export const WORDMARK_SIZE = { width: ${wordTight.width}, height: ${wordTight.height} } as const;
+export const WORDMARK_CAP = { top: ${wordmark.box.minY}, baseline: ${wordmark.baseline} } as const;
 `,
 );
 
