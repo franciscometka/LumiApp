@@ -86,3 +86,21 @@ export function invalidateRecurring(queryClient: QueryClient): Promise<void> {
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboard() }),
   ]).then(() => undefined);
 }
+
+/**
+ * O plano mudou — as transacoes, nao.
+ *
+ * Plano e transacao nunca se escrevem: o primeiro e referencia, as segundas
+ * sao fatos, e os dois so se encontram no calculo de progresso. Por isso aqui
+ * cai o plano e o snapshot daquele mes (o progresso faz parte dele), e NAO a
+ * lista de transacoes, que continua valida byte a byte.
+ *
+ * Tambem nao cai o snapshot do mes seguinte: diferente de uma transacao, um
+ * plano de outubro nao participa de nenhuma comparacao de novembro.
+ */
+export function invalidatePlan(queryClient: QueryClient, month: MonthKey): Promise<void> {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.monthlyPlan(month) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.monthlySnapshot(month) }),
+  ]).then(() => undefined);
+}

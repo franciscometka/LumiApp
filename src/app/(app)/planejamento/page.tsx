@@ -1,4 +1,7 @@
-import { ComingSoon, PageShell } from '@/components/layout/page-shell';
+import { Suspense } from 'react';
+
+import { PageShell } from '@/components/layout/page-shell';
+import { PlanningView } from '@/features/planning/planning-view';
 
 export default function PlanejamentoPage() {
   return (
@@ -6,7 +9,9 @@ export default function PlanejamentoPage() {
       title="Planejamento"
       description="Renda esperada, limite de gastos e meta de economia."
     >
-      <ComingSoon lote="Lote 8" />
+      <Suspense fallback={null}>
+        <PlanningView />
+      </Suspense>
     </PageShell>
   );
 }

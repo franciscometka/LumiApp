@@ -76,7 +76,7 @@ describe('buildSnapshot', () => {
     expect(snapshot.totals.expense).toBe(snapshot.commitments.totalExpenseCents);
     expect(snapshot.totals.expense).toBe(snapshot.expenseByCategory.totalCents);
     expect(snapshot.totals.income).toBe(snapshot.incomeByCategory.totalCents);
-    expect(snapshot.plan.actualSpendingCents).toBe(snapshot.totals.expense);
+    expect(snapshot.plan.committedSpendingCents).toBe(snapshot.totals.expense);
   });
 
   it('nao quebra em periodo totalmente vazio', () => {

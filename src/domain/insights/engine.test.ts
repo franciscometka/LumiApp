@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { briefingScenario, date, makeExpense, makeIncome } from '../__testing__/factories';
+import { briefingScenario, date, makeExpense, makeIncome, makePlan } from '../__testing__/factories';
 import { buildSnapshot } from '../calculations/snapshot';
 import type { PeriodSnapshot } from '../calculations/snapshot';
 import type { Transaction } from '../entities/transaction';
@@ -216,5 +216,77 @@ describe('determinismo', () => {
   it('mesmas entradas, mesma saida', () => {
     const snapshot = snapshotDe(briefingScenario());
     expect(textos(snapshot, 9)).toEqual(textos(snapshot, 9));
+  });
+});
+
+describe('insight do limite do planejamento', () => {
+  const plano = (limite: number) =>
+    makePlan({ expectedIncomeCents: 300000, spendingLimitCents: limite, savingsGoalCents: 50000 });
+
+  function snapshotComPlano(transactions: Transaction[], limite: number): PeriodSnapshot {
+    const month = toMonthKey('2026-10') as MonthKey;
+    return buildSnapshot({
+      transactions,
+      resolver: civilMonthResolver,
+      period: civilMonthResolver.resolve(month),
+      today: date('2026-10-20') as PlainDate,
+      plan: plano(limite),
+    });
+  }
+
+  it('cala abaixo de 90% do limite', () => {
+    const snapshot = snapshotComPlano(
+      [makeExpense({ amountCents: 200000, date: '2026-10-05' })],
+      300000,
+    );
+    expect(textos(snapshot, 9).join(' ')).not.toContain('limite');
+  });
+
+  it('entre 90% e 100% informa o percentual', () => {
+    const snapshot = snapshotComPlano(
+      [makeExpense({ amountCents: 94000, date: '2026-10-05' })],
+      100000,
+    );
+
+    const frases = textos(snapshot, 9).join(' ');
+    expect(frases).toContain('comprometeu 94% do seu limite');
+    expect(frases).not.toContain('ultrapassou');
+  });
+
+  it('acima de 100% informa QUANTO passou, em reais', () => {
+    // Percentual deixa de ajudar quando ja estourou: o acionavel e o valor.
+    const snapshot = snapshotComPlano(
+      [makeExpense({ amountCents: 261000, date: '2026-10-05' })],
+      250000,
+    );
+
+    const frases = textos(snapshot, 9).join(' ');
+    expect(frases).toContain('ultrapassou o limite deste mês em R$ 110,00');
+    expect(frases).not.toContain('comprometeu');
+  });
+
+  it('nao fala de limite quando nao ha plano', () => {
+    const snapshot = snapshotDe([makeExpense({ amountCents: 500000, date: '2026-10-05' })]);
+    expect(textos(snapshot, 9).join(' ')).not.toContain('limite');
+  });
+
+  it('nao fala de limite quando o plano nao tem limite declarado', () => {
+    const snapshot = snapshotComPlano(
+      [makeExpense({ amountCents: 500000, date: '2026-10-05' })],
+      0,
+    );
+    expect(textos(snapshot, 9).join(' ')).not.toContain('limite');
+  });
+
+  it('saldo negativo continua tendo prioridade maior', () => {
+    const snapshot = snapshotComPlano(
+      [
+        makeIncome({ amountCents: 100000, date: '2026-10-01' }),
+        makeExpense({ amountCents: 300000, date: '2026-10-05' }),
+      ],
+      250000,
+    );
+
+    expect(textos(snapshot, 1)[0]).toContain('passaram as entradas');
   });
 });

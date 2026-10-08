@@ -46,6 +46,9 @@ export const queryKeys = {
   debts: () => [...queryKeys.all, 'debts'] as const,
   recurringBills: () => [...queryKeys.all, 'recurring-bills'] as const,
 
+  /** Plano mensal. Um por mes, e o mes faz parte da chave. */
+  monthlyPlan: (month: MonthKey) => [...queryKeys.all, 'plan', month] as const,
+
   /**
    * Materializacao das contas recorrentes de um mes.
    *

@@ -144,6 +144,45 @@ const expenseComparison: InsightRule = {
  * Em um mes encerrado, "voce terminara o mes com..." e absurdo — ja terminou.
  * Em um mes futuro nao ha ritmo medido para extrapolar.
  */
+/**
+ * Limite do planejamento comprometido.
+ *
+ * Duas frases, nao uma. Entre 90% e 100% a informacao util e o percentual —
+ * "esta chegando perto". Acima de 100% o percentual deixa de ajudar: saber que
+ * passou e menos acionavel do que saber QUANTO passou, em reais.
+ *
+ * So existe quando ha plano com limite declarado, e usa o gasto COMPROMETIDO
+ * (pago + pendente), que e o mesmo numero da tela de Planejamento — duas
+ * telas discordando sobre o limite seria pior do que uma so falar dele.
+ */
+const planLimit: InsightRule = {
+  id: 'plan-limit',
+  evaluate({ snapshot }) {
+    const { plan } = snapshot;
+    if (!plan.hasPlan || plan.spendingLimitCents === 0) return null;
+    if (plan.spendingPercentage === null) return null;
+
+    const rounded = roundPercentage(plan.spendingPercentage, 0);
+    if (rounded < 90) return null;
+
+    if (plan.remainingToSpendCents < 0) {
+      return {
+        id: 'plan-limit',
+        text: `Você ultrapassou o limite deste mês em ${formatMoney(plan.overLimitCents)}.`,
+        tone: 'attention',
+        priority: 95,
+      };
+    }
+
+    return {
+      id: 'plan-limit',
+      text: `Você já comprometeu ${formatPercentage(plan.spendingPercentage)} do seu limite deste mês.`,
+      tone: 'attention',
+      priority: 92,
+    };
+  },
+};
+
 const endOfMonthProjection: InsightRule = {
   id: 'projection',
   evaluate({ snapshot }) {
@@ -168,6 +207,7 @@ const endOfMonthProjection: InsightRule = {
 
 export const INSIGHT_RULES: readonly InsightRule[] = [
   negativeBalance,
+  planLimit,
   incomeUsage,
   endOfMonthProjection,
   reserveDependency,
