@@ -54,6 +54,32 @@ export const PRIMARY_DESTINATIONS: readonly NavDestination[] = [
   },
 ];
 
+/**
+ * Telas que, no celular, ficam atras do "Mais". Cartoes entra aqui: a tab bar
+ * tem cinco slots e o do meio e do FAB, entao cabem dois destinos de cada
+ * lado. No desktop a sidebar tem espaco e Cartoes continua item proprio.
+ */
+export const MOBILE_MORE_ROUTES = ['/cartoes', ...MORE_ROUTES] as const;
+
+const [INICIO, TRANSACOES, PLANEJAMENTO, , MAIS] = PRIMARY_DESTINATIONS as [
+  NavDestination,
+  NavDestination,
+  NavDestination,
+  NavDestination,
+  NavDestination,
+];
+
+/**
+ * Tab bar do mobile: `Inicio | Transacoes | (+) | Planos | Mais`.
+ *
+ * Simetrica por construcao — dois destinos de cada lado do FAB. O "Mais" do
+ * celular acende tambem em Cartoes, que mora nele.
+ */
+export const MOBILE_TAB_DESTINATIONS = {
+  left: [INICIO, TRANSACOES],
+  right: [PLANEJAMENTO, { ...MAIS, childRoutes: MOBILE_MORE_ROUTES }],
+} as const satisfies Record<'left' | 'right', readonly [NavDestination, NavDestination]>;
+
 /** Rotulo a usar em espaco apertado. */
 export function tabLabel(destination: NavDestination): string {
   return destination.shortLabel ?? destination.label;

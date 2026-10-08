@@ -19,7 +19,7 @@ import { AppBootScreen, StorageErrorScreen } from './boot-screens';
 import { DesktopSidebar } from './desktop-sidebar';
 import { MobileTabBar } from './mobile-tab-bar';
 import { showsMonthSwitcher } from './navigation';
-import { QuickAddFab, QuickAddSheet } from './quick-add';
+import { QuickAddSheet } from './quick-add';
 
 /**
  * Casca da aplicacao.
@@ -61,7 +61,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <MobileTabBar />
-          <QuickAddFab />
           <QuickAddSheet />
         </div>
       </DataSourceProvider>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  MOBILE_MORE_ROUTES,
+  MOBILE_TAB_DESTINATIONS,
   MORE_ROUTES,
   PRIMARY_DESTINATIONS,
   isDestinationActive,
@@ -103,6 +105,37 @@ describe('Mais acende nas telas que pertencem a ele', () => {
       const ativos = PRIMARY_DESTINATIONS.filter((item) => isDestinationActive(item, pathname));
       expect(ativos.map((item) => item.label), pathname).toEqual(['Mais']);
     }
+  });
+});
+
+describe('tab bar do mobile', () => {
+  const { left, right } = MOBILE_TAB_DESTINATIONS;
+  const tabs = [...left, ...right];
+
+  it('Inicio | Transacoes | (+) | Planos | Mais: dois de cada lado do FAB', () => {
+    expect(left.map(tabLabel)).toEqual(['Início', 'Transações']);
+    expect(right.map(tabLabel)).toEqual(['Planos', 'Mais']);
+  });
+
+  it('Cartoes sai da tab bar e passa a acender o Mais', () => {
+    expect(tabs.map((item) => item.href)).not.toContain('/cartoes');
+    for (const pathname of ['/cartoes', '/cartoes/1', ...MORE_ROUTES, '/mais']) {
+      const ativos = tabs.filter((item) => isDestinationActive(item, pathname));
+      expect(ativos.map((item) => item.label), pathname).toEqual(['Mais']);
+    }
+  });
+
+  it('toda rota alcancavel acende exatamente uma aba', () => {
+    for (const pathname of ['/', '/transacoes', '/planejamento', ...MOBILE_MORE_ROUTES, '/mais']) {
+      const ativos = tabs.filter((item) => isDestinationActive(item, pathname));
+      expect(ativos, pathname).toHaveLength(1);
+    }
+  });
+
+  it('a sidebar do desktop continua com Cartoes proprio, e o Mais dela nao acende ali', () => {
+    const mais = PRIMARY_DESTINATIONS[4]!;
+    expect(PRIMARY_DESTINATIONS.map((item) => item.href)).toContain('/cartoes');
+    expect(isDestinationActive(mais, '/cartoes')).toBe(false);
   });
 });
 

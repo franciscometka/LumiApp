@@ -1,11 +1,25 @@
 import Link from 'next/link';
-import { ChevronRight, HandCoins, History, Repeat, Settings } from 'lucide-react';
+import { ChevronRight, CreditCard, HandCoins, History, Repeat, Settings } from 'lucide-react';
 
 import { PageShell } from '@/components/layout/page-shell';
+import { cn } from '@/lib/utils';
 import { PersistenceStatusCard } from '@/features/app/persistence-status-card';
 
-/** Telas que ja existem e nao cabem na navegacao principal. */
+/**
+ * Telas que nao cabem na navegacao principal do celular.
+ *
+ * Cartoes abre a lista so no celular: ali ele saiu da tab bar (cinco slots,
+ * o do meio e do FAB) e mora aqui. No desktop ele ja e item da sidebar, entao
+ * some daqui (`lg:hidden`, o mesmo breakpoint em que a sidebar aparece).
+ */
 const SECTIONS = [
+  {
+    label: 'Cartões',
+    description: 'Faturas, limites e vencimentos.',
+    href: '/cartoes' as const,
+    icon: CreditCard,
+    mobileOnly: true,
+  },
   {
     label: 'Dívidas e empréstimos',
     description: 'Parcelas, progresso e quanto falta.',
@@ -40,12 +54,12 @@ const SECTIONS = [
  */
 export default function MaisPage() {
   return (
-    <PageShell title="Mais" description="Dívidas, recorrentes, histórico e ajustes.">
+    <PageShell title="Mais" description="Tudo o que não está na navegação principal.">
       <div className="grid gap-4">
         <nav className="bg-card overflow-hidden rounded-xl border">
           <ul className="divide-y">
             {SECTIONS.map((section) => (
-              <li key={section.href}>
+              <li key={section.href} className={cn('mobileOnly' in section && 'lg:hidden')}>
                 <Link
                   href={section.href}
                   className="hover:bg-accent/60 flex min-h-14 items-center gap-3 px-5 py-3 transition-colors"
